@@ -16,6 +16,10 @@ Route::get('/test',function (Request $request){
 
 
 // Auth apis
-
-
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/signup', [AuthController::class, 'signup'])->name('signup');
+
+
+// Route::middleware('auth:sanctum')->group(function () {
+//     Route::post('/parties', [PartyController::class, 'store']);
+// });
