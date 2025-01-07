@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Tenant;
 
 class AuthController extends Controller
 {
 
     public function login(Request $request){
-
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:6'
@@ -52,7 +52,6 @@ class AuthController extends Controller
         'password' => 'required|string|min:6',
         'mobile_number' => 'required|numeric|digits:10'
     ]);
-
     if ($validator->fails()) {
         return response()->json([
             'message' => 'Validation failed',
@@ -66,6 +65,12 @@ class AuthController extends Controller
     $user->password = Hash::make($request->password); 
     $user->mobile_number = $request->mobile_number;
     $user->save();
+
+    $tenant = new Tenant();
+    $tenant->user_id = $user->id;
+    $tenant->save();
+
+
 
     return response()->json([
         'message' => 'User created successfully',
