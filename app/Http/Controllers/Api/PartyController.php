@@ -51,7 +51,7 @@ class PartyController extends Controller
         return response()->json($partygroup, 200);
     }
 
-
+ 
 
 
     public function addParty(Request $request) {
@@ -141,6 +141,18 @@ class PartyController extends Controller
         }
         $user = auth()->user();
         return response()->json(['message' => 'Party group created successfully'], 200);
+    }
+
+
+    public function editPartyDetails(Request $request){
+        $validator = Validator::make($request->all(), [
+            'party_id' => 'required|numeric'
+        ]);
+
+        $parties = Party::with(['shippingAddresses', 'additionalFields'])
+        ->where('id', $request->party_id)->first();
+
+        dd($parties);
     }
     
     

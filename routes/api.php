@@ -40,8 +40,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getparty', [PartyController::class, 'getParty']);
    
 });
+Route::post('/updatepartydetails', [PartyController::class, 'editPartyDetails']);
 
-// Add party gropu
+// Get business type
+Route::get('/getbusinesstype', [TenantController::class, 'getBusinessType']);
+
+// Get Business category
+Route::get('/getbusinesscategory', [TenantController::class, 'getBusinessCategory']);
+
+// get All states
+Route::get('/getallstates', [TenantController::class, 'getAllStates']);
+// Add party group
 Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
 
 Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);

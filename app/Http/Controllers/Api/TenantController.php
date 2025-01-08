@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\TenantController;
 use App\Models\Tenant;
+use App\Models\Businesstype;
+use App\Models\Businesscategory;
+use App\Models\State;
 use Illuminate\Support\Facades\Storage;
 class TenantController extends Controller
 {
@@ -22,9 +25,10 @@ class TenantController extends Controller
     // }
 
 
-    public function getAllBranchDetails(){
+    public function getAllBranchDetails()
+    {
         $user = auth()->user(); 
-        $tenants = Tenant::with('user')->where('user_id', $user->id)->get();
+        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])->where('user_id', $user->id)->get();
         return response()->json([
             'message' => 'Tenant details retrieved successfully',
             'tenants' => $tenants
@@ -32,16 +36,31 @@ class TenantController extends Controller
     }
 
 
+    public function getBusinessCategory(){
+        $businesscategory = Businesscategory::all();
+        return response()->json($businesscategory, 200);
+    }
+
+    public function getBusinessType(){
+        $businesstype = Businesstype::all();
+        return response()->json($businesstype, 200);
+    }
+
+    public function getAllStates(){
+        $states= State::all();
+        return response()->json($states, 200);
+    }
+
     public function updateMainBranchDetails(Request $request){
         $validator = Validator::make($request->all(), [
             'tenant_id' => 'required|numeric',
             'business_name' => 'required|string',
-            'business_type' => 'required|string',
+            'business_type' => 'required|numeric',
             'business_address' => 'required|string',
             'phone_number' => 'required|numeric|  digits:10',
-            'business_category' => 'required|string',
+            'business_category' => 'required|numeric',
             'TIN_number' => 'required|string',
-            'state' => 'required|string',
+            'state' => 'required|numeric',
             'business_email' => 'required|email',
             'pin_code' => 'required|numeric|digits:6',
             'business_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -54,6 +73,8 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
+
+
     
         $user = auth()->user(); 
         if (!$user) {
