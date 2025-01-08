@@ -36,5 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
 // All Party Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addparty', [PartyController::class, 'addParty']);
+    Route::get('/getparties', [PartyController::class, 'getParties']);
+    Route::get('/getparty', [PartyController::class, 'getParty']);
+   
 });
 
+// Add party gropu
+Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
+
+Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);
