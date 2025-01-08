@@ -27,4 +27,19 @@ class Tenant extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function businesstype()
+    {
+        return $this->belongsTo(BusinessType::class);
+    }
+
+    public function businesscategory()
+    {
+        return $this->belongsTo(BusinessCategory::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
 }
