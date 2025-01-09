@@ -107,5 +107,11 @@ class TenantController extends Controller
             'tenant' => $tenant
         ], 200);
     }
+
+
+    
+    public function deleteParty(){
+        dd("Working");
+    }
 }
 
