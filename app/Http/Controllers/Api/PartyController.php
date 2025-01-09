@@ -144,18 +144,14 @@ class PartyController extends Controller
     }
 
 
-    public function editPartyDetails(Request $request){
-        $validator = Validator::make($request->all(), [
-            'party_id' => 'required|numeric'
-        ]);
-
-        $parties = Party::with(['shippingAddresses', 'additionalFields'])
-        ->where('id', $request->party_id)->first();
-
-        dd($parties);
+    public function updatePartyDetails(Request $request){
+     dd("working");
     }
     
+
+
+
     
 
-    }
+}
 
