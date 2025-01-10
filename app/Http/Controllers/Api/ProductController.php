@@ -44,7 +44,6 @@ class ProductController extends Controller
 
 
     public function getBaseUnit(){
-        dd("working");
         $productbaseunits = Productbaseunit::all();
         return response()->json($productbaseunits, 200);
     }
