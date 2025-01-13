@@ -58,7 +58,21 @@ Route::get('/deleteparty', [TenantController::class, 'deleteParty']);
 
 
 // Product apis
+Route::middleware('auth:sanctum')->group(function () {
+     Route::post('/addproduct', [ProductController::class, 'addProduct']);
+     Route::get('/getproducts', [ProductController::class, 'getProducts']);
+});
+
+
+Route::post('/addtaxgroup', [ProductController::class, 'addTaxGroup']);
+Route::get('/gettaxgroup', [ProductController::class, 'getTaxGroup']);
+Route::post('/addtaxrate', [ProductController::class, 'addTaxRate']);
+Route::get('/gettaxrate', [ProductController::class, 'getTaxRate']);
+
+
 Route::post('/addproductcategory', [ProductController::class, 'addProductCategory']);
 Route::get('/getproductcategory', [ProductController::class, 'getProductCategory']);
 Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
 Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
+
+Route::get('/assigncode', [ProductController::class, 'assignCode']);
