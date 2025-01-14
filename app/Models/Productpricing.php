@@ -6,9 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Productpricing extends Model
 {
-    public function pricing()
-{
-    return $this->hasOne(Productpricing::class);
-}
+    protected $fillable = [
+        'product_id',
+        'sale_price',
+        'withorwithouttax',
+        'discount',
+        'percentageoramount'
+    ];
 
+    public function pricing()
+    {
+        return $this->hasOne(Productpricing::class);
+    }
 }

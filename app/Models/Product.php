@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+    protected $fillable = [
+        'product_name',
+        'product_hsn',
+        'product_base_unit',
+        'description',
+        'mrp',
+        'category_id',
+        'item_code',
+        'tax_id'
+    ];
     
     public function unitConversion()
     {

@@ -16,8 +16,10 @@ use App\Models\Productwholesaleprice;
 use App\Models\Productstock;
 use App\Models\Productimages;
 use App\Models\Productonlinestore;
+use App\Models\Productstockadjectment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -60,8 +62,8 @@ class ProductController extends Controller
             'online_store_product_description'=> 'required',
 
             //product images
-            'product_images' => 'required|array',
-            'product_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            // 'product_images' => 'required|array',
+            // 'product_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
 
 
         ]);
@@ -121,18 +123,22 @@ class ProductController extends Controller
         $onlinestore->product_id = $product->id;
         $onlinestore->save();
 
-        if ($request->has('product_images')) {
-    foreach ($request->file('product_images') as $image) {
-        $path = $image->store('product_images', 'public');
-        $productImage = new ProductImage();
-        $productImage->product_id = $product->id;
-        $productImage->image_path = $path;
-        $productImage->save();
-    }
+    //     if ($request->has('product_images')) {
+    // foreach ($request->file('product_images') as $image) {
+    //     $path = $image->store('product_images', 'public');
+    //     $productImage = new ProductImage();
+    //     $productImage->product_id = $product->id;
+    //     $productImage->image_path = $path;
+    //     $productImage->save();
+    // }
 
         return response()->json(['message' => 'Product created successfully'], 200);
-    }
+    // }
 }
+
+
+
+
 
 
 
@@ -162,13 +168,216 @@ class ProductController extends Controller
 
 
 
+
+public function editProdutDetails(Request $request){
+
+    $validator = Validator::make($request->all(), [
+            'product_id' => 'required',
+            'product_name' => 'required',
+            'product_hsn' => 'required',
+            'base_unit_id' => 'required',
+            'secondary_unit_id' => 'required',
+            'conversion_rate' => 'required',
+            'description' => 'required',    
+            'mrp' => 'required',
+            'product_category'=> 'required',
+            'assign_code'=> 'required',
+
+            // sale price
+            'sale_price'=> 'required',
+            'sale_withorwithouttax'=> 'required',
+            'discount_amount'=> 'required',
+            'discount_percentageoramount'=> 'required',
+
+            // wholesale price
+            'wholesale_price'=> 'required',
+            'wholesale_withorwithouttax'=> 'required',
+            'wholesale_min_quantity'=> 'required',
+            'purchese_price'=> 'required',
+            'purchese_withorwithouttax'=> 'required',
+            'tax_id'=> 'required',
+            // stock
+            'opening_stock'=> 'required',
+            'at_price'=> 'required',
+            'min_stock'=> 'required',
+            'location'=> 'required',
+
+            //online store
+            'online_store_price'=> 'required',
+            'online_store_product_description'=> 'required',
+
+            //product images
+            // 'product_images' => 'required|array',
+            // 'product_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 400);
+    }
+
+    $product = Product::find($request->product_id);
+    
+    if (!$product) {
+        return response()->json(['error' => 'Product not found'], 404);
+    }
+
+    $product->update([
+        'product_name' => $request->product_name,
+        'product_hsn' => $request->product_hsn,
+        'product_base_unit' => $request->base_unit_id,
+        'description' => $request->description,
+        'mrp' => $request->mrp,
+        'category_id' => $request->product_category,
+        'item_code' => $request->assign_code,
+        'tax_id' => $request->tax_id
+    ]);
+
+    $unitconversion = Productunitconversion::where('product_id', $product->id)->first();
+   
+    $unitconversion->update([
+        'product_base_unit_id' => $request->base_unit_id,
+        'product_secondary_unit_id' => $request->secondary_unit_id,
+        'conversion_rate' => $request->conversion_rate
+    ]);
+
+    $saleprice = Productpricing::where('product_id', $product->id)->first();
+    $saleprice->update([
+        'sale_price' => $request->sale_price,
+        'withorwithouttax' => $request->sale_withorwithouttax,
+        'discount' => $request->discount_amount,
+        'percentageoramount' => $request->discount_percentageoramount
+    ]);
+
+    $wholesaleprice = Productwholesaleprice::where('product_id', $product->id)->first();
+    $wholesaleprice->update([
+        'whole_sale_price' => $request->wholesale_price,
+        'withorwithouttax' => $request->wholesale_withorwithouttax,
+        'wholesale_min_quantity' => $request->wholesale_min_quantity
+    ]);
+
+    $stock = Productstock::where('product_id', $product->id)->first();
+    $stock->update([
+        'product_stock' => $request->opening_stock,
+        'at_price' => $request->at_price,
+        'min_stock' => $request->min_stock,
+        'location' => $request->location
+    ]);
+
+    $onlinestore = Productonlinestore::where('product_id', $product->id)->first();
+    $onlinestore->update([
+        'online_store_price' => $request->online_store_price,
+        'online_product_description' => $request->online_store_product_description
+    ]);
+    
+    return response()->json([
+        'message' => 'Product updated successfully',
+        'product' => $product
+    ], 200);
+}
+
+
+
+public function deleteProduct($product_id){
+    try {
+        $product = Product::findOrFail($product_id);
+
+        DB::beginTransaction();
+        try {
+            // Delete related records
+            Productunitconversion::where('product_id', $product_id)->delete();
+            Productpricing::where('product_id', $product_id)->delete();
+            Productwholesaleprice::where('product_id', $product_id)->delete();
+            Productstock::where('product_id', $product_id)->delete();
+            Productonlinestore::where('product_id', $product_id)->delete();
+
+            // Delete the product
+            $product->delete();
+            
+            DB::commit();
+            return response()->json([
+                'status' => true,
+                'message' => 'Product and all related data deleted successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => false,
+                'message' => 'Error deleting product data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Product not found'
+        ], 404);
+    }
+}
+
+
     public function assignCode(){
         $randomNumber = mt_rand(10000000000, 99999999999);
         return response()->json(['code' => $randomNumber], 200);
     }
 
 
+    public function getProductDetails(Request $request){
+        $user = Auth::user();
 
+        $product = Product::where('id', $request->product_id)
+        ->where('user_id', Auth::user()->id)
+            ->with([
+                'unitConversion', 
+                'pricing',       
+                'wholesalePrice', 
+                'stock',        
+                'onlineStore'   
+            ])
+            ->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        return response()->json(['product' => $product], 200);
+    }
+
+
+
+
+    public function adjectProduct(Request $request){
+        $validator = Validator::make($request->all(), [
+            'addorreduct_product_stock' => 'required',
+            'product_id' => 'required',
+            'stock'=> 'required',
+            'priceperunit'=> 'required',
+            'details'=> 'required'
+        ]);
+
+        
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $productstockadjectment = new Productstockadjectment();
+        $productstockadjectment->addorreduct_product_stock = $request->addorreduct_product_stock;
+        $productstockadjectment->product_id = $request->product_id;
+        $productstockadjectment->stock_quantity = $request->stock;
+        $productstockadjectment->priceperunit = $request->priceperunit;
+        $productstockadjectment->details = $request->details;
+        $productstockadjectment->save();
+
+        $stock = Productstock::where('product_id', $request->product_id)->first();
+        $stock->product_stock = $stock->product_stock + $request->stock;
+        $stock->at_price = $request->priceperunit;
+        $stock->save();
+
+        return response()->json(['message' => 'Product stock adjected successfully'], 200);
+
+        
+    }
 
 
 
