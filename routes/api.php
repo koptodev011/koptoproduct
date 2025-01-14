@@ -29,6 +29,8 @@ Route::post('/signup', [AuthController::class, 'signup'])->name('signup');
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/updatetenantchdetails', [TenantController::class, 'updateMainBranchDetails']);
     Route::get('/getallbranchdetails', [TenantController::class, 'getAllBranchDetails']);
+    Route::post('/addnewfirm', [TenantController::class, 'addNewFirm']);
+    Route::post('/switchfirm', [TenantController::class, 'switchFirm']); 
 });
 
 
@@ -38,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addparty', [PartyController::class, 'addParty']);
     Route::get('/getparties', [PartyController::class, 'getParties']);
     Route::get('/getparty', [PartyController::class, 'getParty']);
+    Route::get('/getactivetenant', [TenantController::class, 'getActiveTanent']);
 });
 // Get business type
 Route::get('/getbusinesstype', [TenantController::class, 'getBusinessType']);
@@ -61,9 +64,14 @@ Route::get('/deleteparty', [TenantController::class, 'deleteParty']);
 Route::middleware('auth:sanctum')->group(function () {
      Route::post('/addproduct', [ProductController::class, 'addProduct']);
      Route::get('/getproducts', [ProductController::class, 'getProducts']);
+     Route::get('/getproductdetails', [ProductController::class, 'getProductDetails']);
+     Route::post('/editproductdetails', [ProductController::class, 'editProdutDetails']);
+     Route::delete('/deleteproduct/{product_id}', [ProductController::class, 'deleteProduct']);
 });
 
 
+
+Route::post('/adjectproduct', [ProductController::class, 'adjectProduct']);
 Route::post('/addtaxgroup', [ProductController::class, 'addTaxGroup']);
 Route::get('/gettaxgroup', [ProductController::class, 'getTaxGroup']);
 Route::post('/addtaxrate', [ProductController::class, 'addTaxRate']);

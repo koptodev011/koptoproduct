@@ -11,10 +11,10 @@ use App\Models\Businesstype;
 use App\Models\Businesscategory;
 use App\Models\State;
 use Illuminate\Support\Facades\Storage;
+
 class TenantController extends Controller
 {
 
-    
     // public function getAllBranchDetails(){
     //     $user = auth()->user(); 
     //     $tenant = Tenant::where('user_id', $user->id)->get();
@@ -57,7 +57,7 @@ class TenantController extends Controller
             'business_name' => 'required|string',
             'business_type' => 'required|numeric',
             'business_address' => 'required|string',
-            'phone_number' => 'required|numeric|  digits:10',
+            'phone_number' => 'nullable|string',
             'business_category' => 'required|numeric',
             'TIN_number' => 'required|string',
             'state' => 'required|numeric',
@@ -109,9 +109,99 @@ class TenantController extends Controller
     }
 
 
+
+    public function addNewFirm(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'business_name' => 'required|string',
+            'business_type' => 'required|numeric',
+            'business_address' => 'required|string',
+            'phone_number' => 'nullable|string',
+            'business_category' => 'required|numeric',
+            'TIN_number' => 'required|string',
+            'state' => 'required|numeric',
+            'business_email' => 'required|email',
+            'pin_code' => 'required|numeric|digits:6',
+            'business_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_signature' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+        $user = auth()->user(); 
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 400);
+        }
+
+        Tenant::where('user_id', $user->id)
+            ->where('isactive', 1)
+            ->update(['isactive' => 0]);
+
+        $tenant = new Tenant();
+        $tenant->user_id = $user->id;
+        $tenant->business_name = $request->business_name;
+        $tenant->business_type = $request->business_type;
+        $tenant->business_address = $request->business_address;
+        $tenant->phone_number = $request->phone_number;
+        $tenant->business_category = $request->business_category;
+        $tenant->TIN_number = $request->TIN_number;
+        $tenant->state = $request->state;
+        $tenant->business_email = $request->business_email;
+        $tenant->pin_code = $request->pin_code;
+        $tenant->business_logo = Storage::url($request->file('business_logo')->store('logos', 'public'));
+        $tenant->business_signature = Storage::url($request->file('business_signature')->store('signatures', 'public'));
+        $tenant->save();
+
+
+        return response()->json([
+            'message' => 'Tenant added successfully',
+            'tenant' => $tenant
+        ], 200);
+    }
+
+    public function switchFirm(Request $request){
+        $user = auth()->user(); 
+       $validator = Validator::make($request->all(), [
+           'tenant_id' => 'required|numeric',
+       ]);
+
+
+       if ($validator->fails()) {
+           return response()->json([
+               'message' => 'Validation failed',
+               'errors' => $validator->errors()
+           ], 400);
+       }
+
+       Tenant::where('user_id', $user->id)
+       ->where('isactive', 1)
+       ->update(['isactive' => 0]);
+
+       $searchTenant = Tenant::where('user_id', $user->id)
+       ->where('id', $request->tenant_id)
+       ->first();
+       $searchTenant->update(['isactive' => 1]);
+
+       return response()->json([
+           'message' => 'Tenant switched successfully'
+       ], 200);
+    }
+    
+    public function getActiveTanent(){
+        $user = auth()->user(); 
+        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])->where('user_id', $user->id)->where('isactive', 1)->get();
+        return response()->json([
+            'message' => 'Tenant details retrieved successfully',
+            'tenants' => $tenants
+        ], 200);
+    }
     
     public function deleteParty(){
         dd("Working");
     }
 }
-
