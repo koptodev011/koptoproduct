@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\PartyController;
 use App\Http\Controllers\Api\ProductController;
-
+use App\Http\Controllers\Api\SalesController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -84,7 +84,6 @@ Route::post('/addproductcategory', [ProductController::class, 'addProductCategor
 Route::get('/getproductcategory', [ProductController::class, 'getProductCategory']);
 Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
 Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
-
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
 
 
@@ -93,3 +92,6 @@ Route::get('/assigncode', [ProductController::class, 'assignCode']);
 
 // Sales Routes
  
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/addsaleinvoice', [SalesController::class, 'addSaleInvoice']);
+});
