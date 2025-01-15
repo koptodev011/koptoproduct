@@ -41,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getparties', [PartyController::class, 'getParties']);
     Route::get('/getparty', [PartyController::class, 'getParty']);
     Route::get('/getactivetenant', [TenantController::class, 'getActiveTanent']);
+    Route::post('/updatepartydetails', [PartyController::class, 'updatePartyDetails']);
+    Route::post('/schedulereminder', [PartyController::class, 'scheduleReminder']);
 });
 // Get business type
 Route::get('/getbusinesstype', [TenantController::class, 'getBusinessType']);
@@ -51,7 +53,7 @@ Route::get('/getallstates', [TenantController::class, 'getAllStates']);
 // Add party group
 Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
 Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);
-Route::post('/updatePartyDetails', [PartyController::class, 'updatePartyDetails']);
+Route::get('/getpartyreminder', [PartyController::class, 'getPartyReminder']);
 Route::get('/deleteparty', [TenantController::class, 'deleteParty']);
 
 
@@ -84,3 +86,10 @@ Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
 Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
 
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
+
+
+
+
+
+// Sales Routes
+ 
