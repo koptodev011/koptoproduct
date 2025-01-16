@@ -93,5 +93,6 @@ Route::get('/assigncode', [ProductController::class, 'assignCode']);
 // Sales Routes
  
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/salescalculation', [SalesController::class, 'salesCalculation']);
     Route::post('/addsaleinvoice', [SalesController::class, 'addSaleInvoice']);
 });
