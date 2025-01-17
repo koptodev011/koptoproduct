@@ -73,19 +73,17 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-
-
-    
+        
         $user = auth()->user(); 
         if (!$user) {
             return response()->json([
                 'message' => 'User not authenticated'
             ], 401);
         }
+        
         $tenant = Tenant::where('user_id', $user->id)
         ->where('id',$request->tenant_id)->first();
 
-    
         if (!$tenant) {
             return response()->json([
                 'message' => 'Tenant not found'

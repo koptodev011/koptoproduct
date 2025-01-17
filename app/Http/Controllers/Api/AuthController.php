@@ -13,8 +13,9 @@ class AuthController extends Controller
 
     public function login(Request $request){
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6'
+            // 'email' => 'required|email',
+            // 'password' => 'required|string|min:6'
+            'password' => 'required|numeric|min:4',
         ]);
 
         if ($validator->fails()) {
@@ -47,10 +48,10 @@ class AuthController extends Controller
     public function signup(Request $request)
 {
     $validator = Validator::make($request->all(), [
-        'name' => 'required|string',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|string|min:6',
-        'mobile_number' => 'required|numeric|digits:10'
+        // 'name' => 'required|string',
+        // 'email' => 'required|email|unique:users,email',
+        // 'password' => 'required|string|min:6',
+        'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number'
     ]);
     if ($validator->fails()) {
         return response()->json([
@@ -58,23 +59,21 @@ class AuthController extends Controller
             'errors' => $validator->errors()
         ], 400);
     }
-
     $user = new User();
-    $user->name = $request->name;
-    $user->email = $request->email;
-    $user->password = Hash::make($request->password); 
+    // $user->name = $request->name;
+    // $user->email = $request->email;
+    // $user->password = Hash::make($request->password); 
     $user->mobile_number = $request->mobile_number;
     $user->save();
 
     $tenant = new Tenant();
     $tenant->user_id = $user->id;
     $tenant->save();
-
-
-
+    $token = $user->createToken('auth_token')->plainTextToken;
     return response()->json([
         'message' => 'User created successfully',
-        'user' => $user
+        'user' => $user,
+        'token' => $token
     ], 200);
 }
 }

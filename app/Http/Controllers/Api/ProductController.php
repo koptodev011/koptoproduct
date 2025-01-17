@@ -472,4 +472,5 @@ public function deleteProduct($product_id){
         $productbaseunits = Productbaseunit::all();
         return response()->json($productbaseunits, 200);
     }
+     
 }
