@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->bigInteger('mobile_number');
+        Schema::table('sales', function (Blueprint $table) {
+            $table->dropColumn('tax_amount');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('mobile_number');
+        Schema::table('sales', function (Blueprint $table) {
+            $table->decimal('tax_amount', 8, 2)->nullable();
         });
     }
 };

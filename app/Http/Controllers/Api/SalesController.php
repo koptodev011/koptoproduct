@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Sale;
+use App\Models\Salespaymenttype;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 class SalesController extends Controller
@@ -59,7 +61,23 @@ class SalesController extends Controller
             "sale_image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             "user_id" => "required|integer",
         ]);
-            
+        $user = auth()->user();
+
+        $sale= new Sale();
+        $sale->sale_type = $request->sale_type;
+        $sale->party_id = $request->party_id;
+        $sale->billing_name = $request->billing_name;
+        $sale->phone_number = $request->phone_number;
+        $sale->po_number = $request->po_number;
+        $sale->po_date = $request->po_date;
+        $sale->received_amount = $request->received_amount;
+        $sale->payment_type_id = $request->payment_type;
+        $sale->sale_description = $request->sale_description;
+        $sale->sale_image = $request->sale_image;
+        $sale->user_id = $user->id;
+        $sale->status = "sale";
+        $sale->save();
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -73,5 +91,31 @@ class SalesController extends Controller
         ], 200);
     }
     
+    public function addSalesPaymentType(Request $request){
+        $validator = Validator::make($request->all(), [
+            "payment_type" => "required|string",
+        ]);
+        $salespaymenttype = new Salespaymenttype();
+        $salespaymenttype->sales_payment_type = $request->payment_type;
+        $salespaymenttype->save();
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+                'data' => $request->all(),
+            ], 400);
+        }
+        return response()->json([
+            'message' => 'Payment type created successfully',
+            'data' => $request->all(),
+        ], 200);
+    }
+
+  
+    public function getSalesPaymentType(){
+        $salespaymenttype = Salespaymenttype::all();
+        return response()->json($salespaymenttype, 200);
+    }
     
 }

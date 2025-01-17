@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Tenant;
+
 
 class AuthController extends Controller
 {
@@ -17,7 +19,7 @@ class AuthController extends Controller
             // 'password' => 'required|string|min:6'
             'password' => 'required|numeric|min:4',
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -74,6 +76,17 @@ class AuthController extends Controller
         'message' => 'User created successfully',
         'user' => $user,
         'token' => $token
+    ], 200);
+}
+
+
+public function profile(){
+    dd(Auth::user());
+
+    $user = auth()->user();
+    return response()->json([
+        'message' => 'User details retrieved successfully',
+        'user' => $user
     ], 200);
 }
 }

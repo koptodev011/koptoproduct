@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sales', function (Blueprint $table) {
+        Schema::create('productsales', function (Blueprint $table) {
             $table->id();
-            $table->boolean('sale_type')->default(true);
-            $table->foreignId('party_id')->constrained('parties')->onDelete('cascade');
-            $table->string('billing_name')->nullable();
-            $table->string('phone_number')->nullable();
-            $table->integer('po_number')->nullable();
-            $table->string('po_date')->nullable();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->integer('quantity');
             $table->integer('amount');
@@ -28,12 +22,7 @@ return new class extends Migration
             $table->integer('discount_amount')->nullable();
             $table->integer('tax_percentage')->nullable();
             $table->integer('tax_amount')->nullable();
-            $table->integer('received_amount')->nullable();
-            $table->integer('payment_type')->nullable();
-            $table->string('sale_description')->nullable();
-            $table->string('sale_image')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('status')->nullable();
+            $table->foreignId('sale_id')->constrained('sales')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -43,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sales');
+        Schema::dropIfExists('productsales');
     }
 };

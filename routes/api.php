@@ -23,8 +23,9 @@ use App\Http\Controllers\Api\SalesController;
 // Auth apis
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/signup', [AuthController::class, 'signup'])->name('signup');
-
-
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [AuthController::class, 'profile']);
+});
 // Tenant apis
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/updatetenantchdetails', [TenantController::class, 'updateMainBranchDetails']);
@@ -96,3 +97,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/salescalculation', [SalesController::class, 'salesCalculation']);
     Route::post('/addsaleinvoice', [SalesController::class, 'addSaleInvoice']);
 });
+
+Route::post('/addsalespaymenttype', [SalesController::class, 'addSalesPaymentType']);
+Route::get('/getsalespaymenttype', [SalesController::class, 'getSalesPaymentType']);

@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\Businesstype;
 use App\Models\Businesscategory;
 use App\Models\State;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 class TenantController extends Controller
@@ -73,12 +74,16 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
+        $user = auth()->user();
+        $user->update([
+            'name' => $request->business_name,
+            'email' => $request->business_email,
+        ]);
         
-        $user = auth()->user(); 
         if (!$user) {
             return response()->json([
                 'message' => 'User not authenticated'
-            ], 401);
+            ], 400);
         }
         
         $tenant = Tenant::where('user_id', $user->id)
@@ -89,6 +94,7 @@ class TenantController extends Controller
                 'message' => 'Tenant not found'
             ], 404);
         }
+
         if ($request->hasFile('business_logo')) {
             $logoPath = $request->file('business_logo')->store('logos', 'public');
             $tenant->business_logo = Storage::url($logoPath);
