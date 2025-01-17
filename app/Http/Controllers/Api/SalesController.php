@@ -59,7 +59,7 @@ class SalesController extends Controller
             "sale_image" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
             "user_id" => "required|integer",
         ]);
-        
+            
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
