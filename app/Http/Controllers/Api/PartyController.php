@@ -72,7 +72,6 @@ class PartyController extends Controller
             'addatioal_fields.*.addational_field_data' => 'required|string',
             'group_id' => 'nullable|numeric',
         ]);
-    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
