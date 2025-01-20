@@ -99,4 +99,5 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/addsalespaymenttype', [SalesController::class, 'addSalesPaymentType']);
+
 Route::get('/getsalespaymenttype', [SalesController::class, 'getSalesPaymentType']);
