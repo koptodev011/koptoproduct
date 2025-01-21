@@ -252,5 +252,108 @@ class SalesController extends Controller
         $salespaymenttype = Salespaymenttype::all();
         return response()->json($salespaymenttype, 200);
     }
-    
+
+
+
+
+
+
+
+
+public function addSalesQuotation(Request $request){
+    $validator = Validator::make($request->all(), [
+        "party_id" => "required|integer",
+        "phone_number" => "nullable|string",
+        "po_number" => "required|numeric",
+        "po_date" => "required|string",
+        "sale_description" => "nullable|string",
+        "sale_image" => "nullable",
+        "received_amount" => "required|integer",
+        "payment_type" => "required|integer",
+        "items" => "required|array",
+        "items.*.product_id" => "required|integer",
+        "items.*.quantity" => "required|integer",
+        "items.*.price_per_unit" => "required|integer",
+        "items.*.item_amount" => "required|integer", 
+        "items.*.discount_percentage" => "nullable|integer", 
+        "items.*.tax_amount" => "nullable|integer",
+    ]);
+   
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $user = auth()->user();  
+    $sale = new Sale();
+    $sale->sale_type = 1;
+    $sale->party_id = $request->party_id;
+    $sale->phone_number = $request->phone_number;
+    $sale->po_number = $request->po_number;
+    $sale->po_date = $request->po_date;
+    $sale->received_amount = $request->received_amount;
+    $sale->payment_type_id = $request->payment_type;
+    $sale->sale_description = $request->sale_description;
+    $sale->sale_image = $request->sale_image;
+    $sale->user_id = $user->id;
+    $sale->status = "Quotation open";
+    $sale->save();
+
+    // Iterate over the items and store them in the ProductSale table
+    foreach ($request->items as $item) {
+        $productSale = new ProductSale();
+        $productSale->product_id = $item['product_id'];
+        $productSale->quantity = $item['quantity'];
+        $productSale->amount = $item['item_amount'];
+        $productSale->unit_id= $item['unit_id'];
+        $productSale->priceperunit = $item['price_per_unit'];
+        $productSale->discount_percentage = $item['discount_percentage'] ?? null;
+        $productSale->discount_amount = $item['discount_amount'] ?? null;
+        $productSale->tax_percentage = $item['tax_percentage']?? null;
+        $productSale->tax_amount = $item['tax_amount'] ?? null;
+        $productSale->sale_id = $sale->id;
+        $productSale->save();
+    }
+
+    return response()->json([
+        'message' => 'Quotation created successfully',
+        'data' => $request->all(),
+    ], 200);
 }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

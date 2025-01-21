@@ -55,17 +55,17 @@ class TenantController extends Controller
     public function updateMainBranchDetails(Request $request){
         $validator = Validator::make($request->all(), [
             'tenant_id' => 'required|numeric',
-            'business_name' => 'required|string',
-            'business_type' => 'required|numeric',
-            'business_address' => 'required|string',
+            'business_name' => 'nullable|string',
+            'business_type' => 'nullable|numeric|exists:business_types,id',
+            'business_address' => 'nullable|string',
             'phone_number' => 'nullable|string',
-            'business_category' => 'required|numeric',
-            'TIN_number' => 'required|string',
-            'state' => 'required|numeric',
-            'business_email' => 'required|email',
-            'pin_code' => 'required|numeric|digits:6',
-            'business_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'business_signature' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
+            'business_category' => 'nullable|numeric|exists:business_categories,id',
+            'TIN_number' => 'nullable|string',
+            'state' => 'nullable|numeric|exists:states,id',
+            'business_email' => 'nullable|email',
+            'pin_code' => 'nullable|numeric|digits:6',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
         ]);
     
         if ($validator->fails()) {
@@ -77,7 +77,7 @@ class TenantController extends Controller
         $user = auth()->user();
         $user->update([
             'name' => $request->business_name,
-            'email' => $request->business_email,
+            // 'email' => $request->business_email,
         ]);
         
         if (!$user) {
@@ -96,11 +96,17 @@ class TenantController extends Controller
         }
 
         if ($request->hasFile('business_logo')) {
+            if ($tenant->business_logo) {
+                Storage::delete(str_replace('/storage/', '', $tenant->business_logo));
+            }
             $logoPath = $request->file('business_logo')->store('logos', 'public');
             $tenant->business_logo = Storage::url($logoPath);
         }
     
         if ($request->hasFile('business_signature')) {
+            if ($tenant->business_signature) {
+                Storage::delete(str_replace('/storage/', '', $tenant->business_signature));
+            }
             $signaturePath = $request->file('business_signature')->store('signatures', 'public');
             $tenant->business_signature = Storage::url($signaturePath);
         }
@@ -117,17 +123,17 @@ class TenantController extends Controller
     public function addNewFirm(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'business_name' => 'required|string',
-            'business_type' => 'required|numeric',
-            'business_address' => 'required|string',
+            'business_name' => 'nullable|string',
+            'business_type' => 'nullable|numeric|exists:business_types,id',
+            'business_address' => 'nullable|string',
             'phone_number' => 'nullable|string',
-            'business_category' => 'required|numeric',
-            'TIN_number' => 'required|string',
-            'state' => 'required|numeric',
-            'business_email' => 'required|email',
-            'pin_code' => 'required|numeric|digits:6',
-            'business_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'business_signature' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
+            'business_category' => 'nullable|numeric|exists:business_categories,id',
+            'TIN_number' => 'nullable|string',
+            'state' => 'nullable|numeric|exists:states,id',
+            'business_email' => 'nullable|email',
+            'pin_code' => 'nullable|numeric|digits:6',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
         ]);
         if ($validator->fails()) {
             return response()->json([
