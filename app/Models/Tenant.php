@@ -30,12 +30,15 @@ class Tenant extends Model
 
     public function businesstype()
     {
-        return $this->belongsTo(BusinessType::class);
+        return $this->belongsTo(BusinessType::class, 'business_types_id');
     }
 
+    // public function businesstype(){
+    //     return $this->hasOne(BusinessType::class);
+    // }
     public function businesscategory()
     {
-        return $this->belongsTo(BusinessCategory::class);
+        return $this->belongsTo(BusinessCategory::class, 'business_categories_id');
     }
 
     public function state()

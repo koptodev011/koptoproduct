@@ -15,6 +15,9 @@ use App\Models\Tenant;
 
 class PartyController extends Controller
 {
+
+
+
     public function getParties() {
         $user = auth()->user();
         $parties = Party::where('user_id', $user->id)
@@ -53,6 +56,10 @@ class PartyController extends Controller
     }
 
  
+
+
+
+
 
 
     public function addParty(Request $request) {
@@ -125,6 +132,11 @@ class PartyController extends Controller
     }
 
 
+
+
+
+
+
     public function addPartyGroup(Request $request){
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string',
@@ -145,25 +157,35 @@ class PartyController extends Controller
     }
 
 
+
+    
+
+
+
+
+
+
+
     public function updatePartyDetails(Request $request)
     {
     $validator = Validator::make($request->all(), [
         'party_id' => 'required|numeric',
-        'party_name' => 'required|string',
-        'tin_number' => 'required|string',
-        'phone_number' => 'required|numeric|digits:10',
-        'email' => 'required|email|unique:users,email,' . $request->party_id,
+        'party_name' => 'nullable|string',
+        'tin_number' => 'nullable|string',
+        'phone_number' => 'nullable|numeric|digits:10',
+        'email' => 'nullable|email|unique:users,email,' .$request->party_id,
         'billing_address' => 'nullable|string',
         'opening_balance' => 'nullable|numeric',
         'topayortorecive' => 'nullable|boolean',
         'creditlimit' => 'nullable|numeric',
-        'shipping_addresses' => 'required|array',
-        'shipping_addresses.*.shipping_addresses' => 'required|string',
-        'addational_fields' => 'required|array',
-        'addational_fields.*.addational_field_name' => 'required|string',
-        'addatioal_fields.*.addational_field_data' => 'required|string',
+        'shipping_addresses' => 'nullable|array',
+        'shipping_addresses.*.shipping_addresses' => 'nullable|string',
+        'addational_fields' => 'nullable|array',
+        'addational_fields.*.addational_field_name' => 'nullable|string',
+        'addatioal_fields.*.addational_field_data' => 'nullable|string',
         'group_id' => 'nullable|numeric',
     ]);
+
 
     if ($validator->fails()) {
         return response()->json([
@@ -173,18 +195,8 @@ class PartyController extends Controller
     }
 
     $user = auth()->user();
-    $tenant = Tenant::where('user_id', $user->id)
-        ->where('isactive', 1)
-        ->first();
-
-    if (!$tenant) {
-        return response()->json([
-            'message' => 'Tenant not found or inactive'
-        ], 404);
-    }
 
     $party = Party::where('id', $request->party_id)
-        ->where('tenant_id', $tenant->id)
         ->where('user_id', $user->id)
         ->first();
 
@@ -194,11 +206,12 @@ class PartyController extends Controller
         ], 404);
     }
 
+
     // Updating party details
     $party->update([
         'party_name' => $request->party_name,
-        'tin_number' => $request->tin_number,
         'phone_number' => $request->phone_number,
+        'tin_number' => $request->tin_number,
         'email' => $request->email,
         'billing_address' => $request->billing_address,
         'opening_balance' => $request->opening_balance,
@@ -208,8 +221,10 @@ class PartyController extends Controller
     ]);
 
     foreach ($request->shipping_addresses as $shippingAddress) {
-        $shippingAddressRecord = $party->shippingAddresses()->where('id', $shippingAddress['shipping_addresses_id'])->first();
-      
+        // dd($shippingAddress);
+        // $shippingAddressRecord = $party->shippingAddresses()->where('id', $shippingAddress['shippingaddresses_id'])->first();
+        
+        $shippingAddressRecord = $party->shippingAddresses()->first();
         if ($shippingAddressRecord) {
             $shippingAddressRecord->update([
                 'shipping_address' => $shippingAddress['shipping_addresses']
@@ -237,6 +252,15 @@ class PartyController extends Controller
         'data' => $party
     ]);
 }
+
+
+
+
+
+
+
+
+
 
 
 public function scheduleReminder(Request $request) {
