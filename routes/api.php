@@ -91,7 +91,6 @@ Route::get('/assigncode', [ProductController::class, 'assignCode']);
 
 
 
-
 // Sales Routes
  
 Route::middleware('auth:sanctum')->group(function () {
@@ -107,3 +106,15 @@ Route::get('/getallsalesearchfilters',[SalesController::class,'getAllSaleSearchF
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsalequotation', [SalesController::class, 'addSalesQuotation']);
 });
+Route::post('/convertquotationtosale', [SalesController::class, 'convertQuotationToSale']);
+
+// Payment In
+Route::post('/addpaymentin',[SalesController::class,'addPaymentIn']);
+
+// Sale Order
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/addsaleorder',[SalesController::class,'addSaleOrder']);
+    Route::post('/deliverychallan',[SalesController::class,'deliveryChallan']);
+    
+});
+

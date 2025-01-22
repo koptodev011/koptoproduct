@@ -8,6 +8,9 @@ use App\Models\Sale;
 use App\Models\Salespaymenttype;
 use App\Models\ProductSale;
 use App\Models\Salefilterindex;
+use App\Models\PaymentType;
+use App\Models\Paymentin;
+use App\Models\Party;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 class SalesController extends Controller
@@ -57,11 +60,11 @@ class SalesController extends Controller
             "po_number" => "required|numeric",
             "po_date" => "required|string",
             "sale_description" => "nullable|string",
-            "sale_image" => "required",
-            "received_amount" => "required|integer",
-            "payment_type" => "required|integer",
+            "sale_image" => "nullable",
+            "received_amount" => "nullable|integer",
+            "payment_type_id" => "required|integer",
             "items" => "required|array",
-            "items.*.product_id" => "required|integer",
+            "items.*.product_id" => "required|integer|exists:products,id",
             "items.*.quantity" => "required|integer",
             "items.*.price_per_unit" => "required|integer",
             "items.*.item_amount" => "required|integer", 
@@ -85,7 +88,7 @@ class SalesController extends Controller
         $sale->po_number = $request->po_number;
         $sale->po_date = $request->po_date;
         $sale->received_amount = $request->received_amount;
-        $sale->payment_type_id = $request->payment_type;
+        $sale->payment_type_id = $request->payment_type_id;
         $sale->sale_description = $request->sale_description;
         $sale->sale_image = $request->sale_image;
         $sale->user_id = $user->id;
@@ -259,6 +262,7 @@ class SalesController extends Controller
 
 
 
+    
 
 public function addSalesQuotation(Request $request){
     $validator = Validator::make($request->all(), [
@@ -269,7 +273,7 @@ public function addSalesQuotation(Request $request){
         "sale_description" => "nullable|string",
         "sale_image" => "nullable",
         "received_amount" => "required|integer",
-        "payment_type" => "required|integer",
+        "payment_type_id" => "required|integer",
         "items" => "required|array",
         "items.*.product_id" => "required|integer",
         "items.*.quantity" => "required|integer",
@@ -294,11 +298,214 @@ public function addSalesQuotation(Request $request){
     $sale->po_number = $request->po_number;
     $sale->po_date = $request->po_date;
     $sale->received_amount = $request->received_amount;
-    $sale->payment_type_id = $request->payment_type;
+    $sale->payment_type_id = $request->payment_type_id;
     $sale->sale_description = $request->sale_description;
     $sale->sale_image = $request->sale_image;
     $sale->user_id = $user->id;
     $sale->status = "Quotation open";
+    $sale->save();
+
+    // Iterate over the items and store them in the ProductSale table
+    foreach ($request->items as $item) {
+        $productSale = new ProductSale();
+        $productSale->product_id = $item['product_id'];
+        $productSale->quantity = $item['quantity'];
+        $productSale->amount = $item['item_amount'];
+        $productSale->unit_id= $item['unit_id'];
+        $productSale->priceperunit = $item['price_per_unit'];
+        $productSale->discount_percentage = $item['discount_percentage'] ?? null;
+        $productSale->discount_amount = $item['discount_amount'] ?? null;
+        $productSale->tax_percentage = $item['tax_percentage']?? null;
+        $productSale->tax_amount = $item['tax_amount'] ?? null;
+        $productSale->sale_id = $sale->id;
+        $productSale->save();
+    }
+
+    return response()->json([
+        'message' => 'Quotation created successfully',
+        'data' => $request->all(),
+    ], 200);
+}
+
+
+
+
+
+
+public function convertQuotationToSale(Request $request){
+    $validator = Validator::make($request->all(), [
+        "sale_id" => "required|integer",
+    ]);
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+    $sale = Sale::find($request->sale_id);
+
+    $sale->status = "sale";
+    $sale->save();
+    return response()->json([
+        'message' => 'Quotation converted to sale successfully',
+        'data' => $request->all(),
+    ], 200);
+}
+
+
+
+public function addPaymentIn(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        "party_id" => "required|integer",
+        "payment_type_id" => "required|integer",
+        "add_description" => "nullable|string",
+        "paymentin_image" => "nullable|image|mimes:jpeg,png,jpg,gif|max:2048",
+        "received_amount" => "required|integer",
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $paymentin = new Paymentin();
+    $paymentin->party_id = $request->party_id;
+    $paymentin->payment_type_id = $request->payment_type_id;
+    $paymentin->add_description = $request->add_description;
+    $paymentin->received_amount = $request->received_amount;
+
+    // Handle image upload
+    if ($request->hasFile('paymentin_image')) {
+        $image = $request->file('paymentin_image');
+        $imagePath = $image->store('paymentin_images', 'public');
+        $paymentin->paymentin_image = $imagePath;
+    }
+    // $paymentin->save();
+
+    $searchforparty = Party::find($request->party_id);
+    if($searchforparty->topayortorecive == 1 && $searchforparty->opening_balance >= $request->received_amount){
+        $searchforparty->opening_balance = $searchforparty->opening_balance - $request->received_amount;
+        $searchforparty->save();
+        return response()->json([
+            'message' => 'Payment added successfully',
+            'data' => $paymentin,
+        ], 200);
+    }else{
+        return response()->json([
+            'message' => 'Payment failed',
+        ], 400);
+    }
+
+  
+}
+
+
+
+public function addSaleOrder(Request $request){
+    $validator = Validator::make($request->all(), [
+        "party_id" => "required|integer",
+        "phone_number" => "nullable|string",
+        "po_number" => "required|numeric",
+        "po_date" => "required|string",
+        "sale_description" => "nullable|string",
+        "sale_image" => "nullable",
+        "received_amount" => "required|integer",
+        "payment_type_id" => "required|integer",
+        "items" => "required|array",
+        "items.*.product_id" => "required|integer",
+        "items.*.quantity" => "required|integer",
+        "items.*.price_per_unit" => "required|integer",
+        "items.*.item_amount" => "required|integer", 
+        "items.*.discount_percentage" => "nullable|integer", 
+        "items.*.tax_amount" => "nullable|integer",
+    ]);
+   
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $user = auth()->user();  
+    $sale = new Sale();
+    $sale->sale_type = 1;
+    $sale->party_id = $request->party_id;
+    $sale->phone_number = $request->phone_number;
+    $sale->po_number = $request->po_number;
+    $sale->po_date = $request->po_date;
+    $sale->received_amount = $request->received_amount;
+    $sale->payment_type_id = $request->payment_type_id;
+    $sale->sale_description = $request->sale_description;
+    $sale->sale_image = $request->sale_image;
+    $sale->user_id = $user->id;
+    $sale->status = "Order overdue";
+    $sale->save();
+
+    // Iterate over the items and store them in the ProductSale table
+    foreach ($request->items as $item) {
+        $productSale = new ProductSale();
+        $productSale->product_id = $item['product_id'];
+        $productSale->quantity = $item['quantity'];
+        $productSale->amount = $item['item_amount'];
+        $productSale->unit_id= $item['unit_id'];
+        $productSale->priceperunit = $item['price_per_unit'];
+        $productSale->discount_percentage = $item['discount_percentage'] ?? null;
+        $productSale->discount_amount = $item['discount_amount'] ?? null;
+        $productSale->tax_percentage = $item['tax_percentage']?? null;
+        $productSale->tax_amount = $item['tax_amount'] ?? null;
+        $productSale->sale_id = $sale->id;
+        $productSale->save();
+    }
+
+    return response()->json([
+        'message' => 'Quotation created successfully',
+        'data' => $request->all(),
+    ], 200);
+}
+
+public function deliveryChallan(Request $request){
+    $validator = Validator::make($request->all(), [
+        "party_id" => "required|integer",
+        "phone_number" => "nullable|string",
+        "po_number" => "required|numeric",
+        "po_date" => "required|string",
+        "sale_description" => "nullable|string",
+        "sale_image" => "nullable",
+        "received_amount" => "required|integer",
+        "payment_type_id" => "required|integer",
+        "items" => "required|array",
+        "items.*.product_id" => "required|integer",
+        "items.*.quantity" => "required|integer",
+        "items.*.price_per_unit" => "required|integer",
+        "items.*.item_amount" => "required|integer", 
+        "items.*.discount_percentage" => "nullable|integer", 
+        "items.*.tax_amount" => "nullable|integer",
+    ]);
+   
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $user = auth()->user();  
+    $sale = new Sale();
+    $sale->sale_type = 1;
+    $sale->party_id = $request->party_id;
+    $sale->phone_number = $request->phone_number;
+    $sale->po_number = $request->po_number;
+    $sale->po_date = $request->po_date;
+    $sale->received_amount = $request->received_amount;
+    $sale->payment_type_id = $request->payment_type_id;
+    $sale->sale_description = $request->sale_description;
+    $sale->sale_image = $request->sale_image;
+    $sale->user_id = $user->id;
+    $sale->status = "Order overdue";
     $sale->save();
 
     // Iterate over the items and store them in the ProductSale table
