@@ -8,6 +8,6 @@ class BusinessCategory extends Model
 {
     public function tenant()
     {
-        return $this->hasOne(Tenant::class);
+        return $this->hasMany(Tenant::class);
     }
 }

@@ -29,12 +29,18 @@ class TenantController extends Controller
     public function getAllBranchDetails()
     {
         $user = auth()->user(); 
-        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])->where('user_id', $user->id)->get();
+        // dd($user);
+        $tenants = User::with('tenants','tenants.businesstype','tenants.businesscategory','tenants.state')->where('id', $user->id)->get();
+        // $tenants = Tenant::with('user', 'businesstype', 'businesscategory', 'state')->where('user_id', $user->id)->get();
+        // $tenants = Tenant::with('businesstype')->get();
         return response()->json([
             'message' => 'Tenant details retrieved successfully',
             'tenants' => $tenants
         ], 200);
     }
+
+
+  
 
 
     public function getBusinessCategory(){
@@ -51,6 +57,10 @@ class TenantController extends Controller
         $states= State::all();
         return response()->json($states, 200);
     }
+
+
+
+
 
     public function updateMainBranchDetails(Request $request){
         $validator = Validator::make($request->all(), [
@@ -120,6 +130,11 @@ class TenantController extends Controller
 
 
 
+
+
+
+
+
     public function addNewFirm(Request $request){
 
         $validator = Validator::make($request->all(), [
@@ -174,10 +189,17 @@ class TenantController extends Controller
         ], 200);
     }
 
+
+
+
+
+
+
+
     public function switchFirm(Request $request){
         $user = auth()->user(); 
        $validator = Validator::make($request->all(), [
-           'tenant_id' => 'required|numeric',
+           'tenant_id' => 'required|numeric|exists:tenants,id',
        ]);
 
 
@@ -201,6 +223,10 @@ class TenantController extends Controller
            'message' => 'Tenant switched successfully'
        ], 200);
     }
+
+
+
+
     
     public function getActiveTanent(){
         $user = auth()->user(); 

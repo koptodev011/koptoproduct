@@ -15,6 +15,7 @@ use App\Models\Productpricing;
 use App\Models\Productwholesaleprice;
 use App\Models\Productstock;
 use App\Models\Productimages;
+
 use App\Models\Productonlinestore;
 use App\Models\Productstockadjectment;
 use Illuminate\Support\Facades\Auth;
@@ -28,42 +29,43 @@ class ProductController extends Controller
     public function addProduct(Request $request){
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'product_name' => 'required',
+            'product_name' => 'nullable|string',
             'product_hsn' => 'required',
             'base_unit_id' => 'required',
-            'secondary_unit_id' => 'required',
-            'conversion_rate' => 'required',
-            'description' => 'required',    
-            'mrp' => 'required',
-            'product_category'=> 'required',
-            'assign_code'=> 'required',
-
+            'secondary_unit_id' => 'nullable',
+            'conversion_rate' => 'nullable',
+            'description' => 'nullable|string',    
+            'mrp' => 'nullable|numeric',
+            'product_category'=> 'nullable',
+            'assign_code'=> 'nullable|numeric',
+        
             // sale price
             'sale_price'=> 'required',
-            'sale_withorwithouttax'=> 'required',
-            'discount_amount'=> 'required',
-            'discount_percentageoramount'=> 'required',
-
+            'sale_withorwithouttax'=> 'nullable',
+            'discount_amount'=> 'nullable|numeric',
+            'discount_percentageoramount'=> 'nullable|numeric',
+        
             // wholesale price
-            'wholesale_price'=> 'required',
-            'wholesale_withorwithouttax'=> 'required',
-            'wholesale_min_quantity'=> 'required',
-            'purchese_price'=> 'required',
-            'purchese_withorwithouttax'=> 'required',
-            'tax_id'=> 'required',
+            'wholesale_price'=> 'nullable|numeric',
+            'wholesale_withorwithouttax'=> 'nullable',
+            'wholesale_min_quantity'=> 'nullable|numeric',
+            'purchese_price'=> 'nullable|numeric', // Corrected typo
+            'purchese_withorwithouttax'=> 'nullable',
+            'tax_id'=> 'nullable|numeric',
+            
             // stock
-            'opening_stock'=> 'required',
-            'at_price'=> 'required',
-            'min_stock'=> 'required',
-            'location'=> 'required',
-
-            //online store
-            'online_store_price'=> 'required',
-            'online_store_product_description'=> 'required',
+            'opening_stock'=> 'nullable|numeric',
+            'at_price'=> 'nullable|numeric',
+            'min_stock'=> 'nullable|numeric',
+            'location'=> 'nullable|string',
+        
+            // online store
+            'online_store_price'=> 'nullable|numeric',
+            'online_store_product_description'=> 'nullable|string',
 
             //product images
-            // 'product_images' => 'required|array',
-            // 'product_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'product_images' => 'required|array',
+            'product_images.*' => 'image|mimes:jpeg,png,jpg,gif',
 
 
         ]);
@@ -123,17 +125,17 @@ class ProductController extends Controller
         $onlinestore->product_id = $product->id;
         $onlinestore->save();
 
-    //     if ($request->has('product_images')) {
-    // foreach ($request->file('product_images') as $image) {
-    //     $path = $image->store('product_images', 'public');
-    //     $productImage = new ProductImage();
-    //     $productImage->product_id = $product->id;
-    //     $productImage->image_path = $path;
-    //     $productImage->save();
-    // }
+        if ($request->has('product_images')) {
+    foreach ($request->file('product_images') as $image) {
+        $path = $image->store('product_images', 'public');
+        $productImage = new ProductImages();
+        $productImage->product_id = $product->id;
+        $productImage->product_image = $path;
+        $productImage->save();
+    }
 
         return response()->json(['message' => 'Product created successfully'], 200);
-    // }
+    }
 }
 
 
@@ -151,7 +153,8 @@ class ProductController extends Controller
             'pricing',       
             'wholesalePrice', 
             'stock',        
-            'onlineStore'   
+            'onlineStore',
+            'images' 
         ])
         ->get();
 
@@ -161,6 +164,8 @@ class ProductController extends Controller
 
     return response()->json(['products' => $products], 200);
 }
+
+
 
 
 
@@ -277,6 +282,11 @@ public function editProdutDetails(Request $request){
 
 
 
+
+
+
+
+
 public function deleteProduct($product_id){
     try {
         $product = Product::findOrFail($product_id);
@@ -324,8 +334,8 @@ public function deleteProduct($product_id){
 
 
     public function getProductDetails(Request $request){
-        $user = Auth::user();
 
+        $user = Auth::user();
         $product = Product::where('id', $request->product_id)
         ->where('user_id', Auth::user()->id)
             ->with([
@@ -337,12 +347,19 @@ public function deleteProduct($product_id){
             ])
             ->first();
 
+
+
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
 
         return response()->json(['product' => $product], 200);
     }
+
+
+
+
+
 
 
 
@@ -370,7 +387,15 @@ public function deleteProduct($product_id){
         $productstockadjectment->save();
 
         $stock = Productstock::where('product_id', $request->product_id)->first();
-        $stock->product_stock = $stock->product_stock + $request->stock;
+        if($request->addorreduct_product_stock==1){
+            $stock->product_stock = $stock->product_stock + $request->stock;
+        }
+        else{
+            $stock->product_stock = $stock->product_stock - $request->stock;
+            if($stock->product_stock < 0){
+                $stock->product_stock = 0;
+            }
+        }
         $stock->at_price = $request->priceperunit;
         $stock->save();
 
