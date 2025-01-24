@@ -6,19 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\PartyController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\SalesController;
-
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
-// Route::get('/test',function (Request $request){
-//     return response()->json([
-//         'message' => 'Hello World'
-//     ]);
-// });
-
-
 
 // Auth apis
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -115,6 +104,17 @@ Route::post('/addpaymentin',[SalesController::class,'addPaymentIn']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsaleorder',[SalesController::class,'addSaleOrder']);
     Route::post('/deliverychallan',[SalesController::class,'deliveryChallan']);
-    
 });
 
+
+
+// Purchase Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/createpurchaseinvoice', [PurchaseController::class, 'createPurchaseInvoice']);
+    Route::get('/getpurchasedata', [PurchaseController::class, 'getPurchaseData']);
+    Route::post('/createpurchaseorderinvoice', [PurchaseController::class, 'createPurchaseOrderInvoice']);
+});
+Route::post('/paymentout', [PurchaseController::class, 'paymentOut']);
+Route::post('/purchaseorder', [PurchaseController::class, 'purchaseOrder']);
+Route::post('/convertpurchaseordertopurchase', [PurchaseController::class, 'convertPurchaseOrderToPurchase']);
+Route::post('/purchasereturn', [PurchaseController::class, 'purchaseReturn']);

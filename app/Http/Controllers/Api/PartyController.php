@@ -168,91 +168,120 @@ class PartyController extends Controller
 
     public function updatePartyDetails(Request $request)
     {
-    $validator = Validator::make($request->all(), [
-        'party_id' => 'required|numeric',
-        'party_name' => 'nullable|string',
-        'tin_number' => 'nullable|string',
-        'phone_number' => 'nullable|numeric|digits:10',
-        'email' => 'nullable|email|unique:users,email,' .$request->party_id,
-        'billing_address' => 'nullable|string',
-        'opening_balance' => 'nullable|numeric',
-        'topayortorecive' => 'nullable|boolean',
-        'creditlimit' => 'nullable|numeric',
-        'shipping_addresses' => 'nullable|array',
-        'shipping_addresses.*.shipping_addresses' => 'nullable|string',
-        'addational_fields' => 'nullable|array',
-        'addational_fields.*.addational_field_name' => 'nullable|string',
-        'addatioal_fields.*.addational_field_data' => 'nullable|string',
-        'group_id' => 'nullable|numeric',
-    ]);
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
+            'party_id' => 'required|numeric',
+            'party_name' => 'nullable|string',
+            'tin_number' => 'nullable|string',
+            'phone_number' => 'nullable|numeric|digits:10',
+            'email' => 'nullable|email|unique:parties,email,' . $request->party_id,
+            'billing_address' => 'nullable|string',
+            'opening_balance' => 'nullable|numeric',
+            'topayortorecive' => 'nullable|boolean',
+            'creditlimit' => 'nullable|numeric',
+            'group_id' => 'nullable|numeric',
+            'shipping_addresses' => 'nullable|array',
+            'shipping_addresses.*.shipping_address_id' => 'nullable|numeric',
+            'shipping_addresses.*.shipping_addresses' => 'nullable|string',
+            'addational_fields' => 'nullable|array',
+            'addational_fields.*.addational_field_id' => 'nullable|numeric',
+            'addational_fields.*.addational_field_name' => 'nullable|string',
+            'addational_fields.*.addational_field_data' => 'nullable|string',
+        ]);
 
-
-    if ($validator->fails()) {
-        return response()->json([
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 400);
-    }
-
-    $user = auth()->user();
-
-    $party = Party::where('id', $request->party_id)
-        ->where('user_id', $user->id)
-        ->first();
-
-    if (!$party) {
-        return response()->json([
-            'message' => 'Party not found or inactive'
-        ], 404);
-    }
-
-
-    // Updating party details
-    $party->update([
-        'party_name' => $request->party_name,
-        'phone_number' => $request->phone_number,
-        'tin_number' => $request->tin_number,
-        'email' => $request->email,
-        'billing_address' => $request->billing_address,
-        'opening_balance' => $request->opening_balance,
-        'topayortorecive' => $request->topayortorecive,
-        'creditlimit' => $request->creditlimit,
-        'group_id' => $request->group_id,
-    ]);
-
-    foreach ($request->shipping_addresses as $shippingAddress) {
-        // dd($shippingAddress);
-        // $shippingAddressRecord = $party->shippingAddresses()->where('id', $shippingAddress['shippingaddresses_id'])->first();
-        
-        $shippingAddressRecord = $party->shippingAddresses()->first();
-        if ($shippingAddressRecord) {
-            $shippingAddressRecord->update([
-                'shipping_address' => $shippingAddress['shipping_addresses']
-            ]);
-        } else {
-            $party->shippingAddresses()->create([
-                'party_id' => $party->id,
-                'shipping_address' => $shippingAddress['shipping_addresses']
-            ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 400);
         }
+
+        // Find the party for the authenticated user
+        $user = auth()->user();
+        $party = Party::where('id', $request->party_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$party) {
+            return response()->json([
+                'message' => 'Party not found or inactive',
+            ], 404);
+        }
+
+        // Update party details
+        $party->update([
+            'party_name' => $request->party_name,
+            'phone_number' => $request->phone_number,
+            'tin_number' => $request->tin_number,
+            'email' => $request->email,
+            'billing_address' => $request->billing_address,
+            'opening_balance' => $request->opening_balance,
+            'topayortorecive' => $request->topayortorecive,
+            'creditlimit' => $request->creditlimit,
+            'group_id' => $request->group_id,
+        ]);
+
+        // Handle shipping addresses
+        if ($request->filled('shipping_addresses')) {
+            foreach ($request->shipping_addresses as $shippingAddress) {
+                if (!empty($shippingAddress['shipping_address_id'])) {
+                    $shippingAddressRecord = $party->shippingAddresses()
+                        ->where('id', $shippingAddress['shipping_address_id'])
+                        ->first();
+
+                    if ($shippingAddressRecord) {
+                        $shippingAddressRecord->update([
+                            'shipping_address' => $shippingAddress['shipping_addresses'],
+                        ]);
+                    } else {
+                        $party->shippingAddresses()->create([
+                            'party_id' => $party->id,
+                            'shipping_address' => $shippingAddress['shipping_addresses'],
+                        ]);
+                    }
+                } else {
+                    $party->shippingAddresses()->create([
+                        'party_id' => $party->id,
+                        'shipping_address' => $shippingAddress['shipping_addresses'],
+                    ]);
+                }
+            }
+        }
+
+        // Handle additional fields
+        if ($request->filled('addational_fields')) {
+            foreach ($request->addational_fields as $additionalField) {
+                if (!empty($additionalField['addational_field_id'])) {
+                    $additionalFieldRecord = $party->additionalFields()
+                        ->where('id', $additionalField['addational_field_id'])
+                        ->first();
+
+                    if ($additionalFieldRecord) {
+                        $additionalFieldRecord->update([
+                            'addational_field_name' => $additionalField['addational_field_name'],
+                            'addational_field_data' => $additionalField['addational_field_data'],
+                        ]);
+                    } else {
+                        $party->additionalFields()->create([
+                            'party_id' => $party->id,
+                            'addational_field_name' => $additionalField['addational_field_name'],
+                            'addational_field_data' => $additionalField['addational_field_data'],
+                        ]);
+                    }
+                } else {
+                    $party->additionalFields()->create([
+                        'party_id' => $party->id,
+                        'addational_field_name' => $additionalField['addational_field_name'],
+                        'addational_field_data' => $additionalField['addational_field_data'],
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Party details updated successfully'
+        ]);
     }
-
-    foreach ($request->addational_fields as $additionalField) {
-        $party->additionalFields()->updateOrCreate(
-            ['id' => $additionalField['id'] ?? null],
-            [
-                'addational_field_name' => $additionalField['addational_field_name'],
-                'addational_field_data' => $additionalField['addational_field_data']
-            ]
-        );
-    }
-
-    return response()->json([
-        'message' => 'Party details updated successfully',
-        'data' => $party
-    ]);
-}
-
 
 
 
