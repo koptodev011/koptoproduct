@@ -12,7 +12,7 @@ class Tenant extends Model
         'business_types_id',
         'business_address',
         'phone_number',
-        'business_category_id',
+        'business_categories_id',
         'TIN_number',
         'state_id',
         'business_email',
