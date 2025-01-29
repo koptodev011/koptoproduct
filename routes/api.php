@@ -14,15 +14,19 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/signup', [AuthController::class, 'signup'])->name('signup');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
+    Route::post('/addstaff',[AuthController::class,'addStaff']);
 });
 // Tenant apis
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/updatetenantchdetails', [TenantController::class, 'updateMainBranchDetails']);
     Route::get('/getallbranchdetails', [TenantController::class, 'getAllBranchDetails']);
     Route::post('/addnewfirm', [TenantController::class, 'addNewFirm']);
-    Route::post('/switchfirm', [TenantController::class, 'switchFirm']); 
+    Route::post('/switchfirm', [TenantController::class, 'switchFirm']);
+    Route::get('/getallstaff', [AuthController::class, 'getAllStaff']); 
 });
 
+Route::post('/updatestaffdetails', [AuthController::class, 'updateStaffDetails']);
+Route::delete('/deletestaff/{staff_id}', [AuthController::class, 'deleteStaff']);
 
 
 // All Party Routes

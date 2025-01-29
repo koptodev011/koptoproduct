@@ -66,16 +66,16 @@ class TenantController extends Controller
         $validator = Validator::make($request->all(), [
             'tenant_id' => 'required|numeric',
             'business_name' => 'nullable|string',
-            'business_type' => 'nullable|numeric|exists:business_types,id',
+            'business_types_id' => 'nullable|numeric|exists:business_types,id',
             'business_address' => 'nullable|string',
             'phone_number' => 'nullable|string',
-            'business_category' => 'nullable|numeric|exists:business_categories,id',
+            'business_categories_id ' => 'nullable|numeric|exists:business_categories,id',
             'TIN_number' => 'nullable|string',
-            'state' => 'nullable|numeric|exists:states,id',
+            'state_id' => 'nullable|numeric|exists:states,id',
             'business_email' => 'nullable|email',
             'pin_code' => 'nullable|numeric|digits:6',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',   
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',   
         ]);
     
         if ($validator->fails()) {
@@ -84,22 +84,26 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-        $user = auth()->user();
-        $user->update([
-            // 'name' => $request->business_name,
-            // 'email' => $request->business_email,
-        ]);
-        
+        $user = auth()->user(); 
         if (!$user) {
             return response()->json([
                 'message' => 'User not authenticated'
             ], 400);
         }
-        
         $tenant = Tenant::where('user_id', $user->id)
         ->where('id',$request->tenant_id)->first();
 
-        dd($tenant);
+        $tenant->update([
+            'business_name' => $request->business_name,
+            'business_types_id' => $request->business_types_id,
+            'business_address' => $request->business_address,
+            'phone_number' => $request->phone_number,
+            'business_categories_id ' => $request->business_categories_id,
+            'TIN_number' => $request->TIN_number,
+            'state_id' => $request->state_id,
+            'business_email' => $request->business_email,
+            'pin_code' => $request->pin_code,
+        ]);
 
         if (!$tenant) {
             return response()->json([
