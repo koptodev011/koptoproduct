@@ -86,7 +86,7 @@ class TenantController extends Controller
         }
         $user = auth()->user();
         $user->update([
-            'name' => $request->business_name,
+            // 'name' => $request->business_name,
             // 'email' => $request->business_email,
         ]);
         
@@ -98,6 +98,8 @@ class TenantController extends Controller
         
         $tenant = Tenant::where('user_id', $user->id)
         ->where('id',$request->tenant_id)->first();
+
+        dd($tenant);
 
         if (!$tenant) {
             return response()->json([
