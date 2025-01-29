@@ -9,12 +9,12 @@ class Tenant extends Model
     
     protected $fillable = [
         'business_name',
-        'business_type',
+        'business_types_id',
         'business_address',
         'phone_number',
-        'business_category',
+        'business_category_id',
         'TIN_number',
-        'state',
+        'state_id',
         'business_email',
         'pin_code',
         'business_logo',
