@@ -66,7 +66,7 @@ class ProductController extends Controller
             'online_store_product_description'=> 'nullable|string',
 
             //product images
-            'product_images' => 'required|array',
+            'product_images' => 'nullable|array',
             'product_images.*' => 'image|mimes:jpeg,png,jpg,gif',
 
 
@@ -116,6 +116,7 @@ class ProductController extends Controller
             $wholesaleprice->save();
         }
 
+        if ($request->has('opening_stock')) {
         $stock = new Productstock();
         $stock->product_stock = $request->opening_stock;
         $stock->at_price = $request->at_price;
@@ -123,11 +124,12 @@ class ProductController extends Controller
         $stock->location = $request->location;
         $stock->product_id = $product->id;
         $stock->save();
+        }
 
 
-        $purchaseprice = new ();
+        $purchaseprice = new Productpurchesprice();
         $purchaseprice->product_purches_price = $request->purchese_price;
-        $purchaseprice->withoutorwithtax = $request->purchese_withorwithouttax;
+        $purchaseprice->withorwithouttax = $request->purchese_withorwithouttax;
         $purchaseprice->product_id = $product->id;
         $purchaseprice->save();
 
@@ -139,17 +141,21 @@ class ProductController extends Controller
         $onlinestore->save();
 
         if ($request->has('product_images')) {
-    foreach ($request->file('product_images') as $image) {
+        foreach ($request->file('product_images') as $image) {
         $path = $image->store('product_images', 'public');
         $productImage = new ProductImages();
         $productImage->product_id = $product->id;
         $productImage->product_image = $path;
         $productImage->save();
+    }  
     }
-
-        return response()->json(['message' => 'Product created successfully'], 200);
-    }
+    return response()->json(['message' => 'Product created successfully'], 200);
 }
+
+
+
+
+
 
 
 
@@ -176,6 +182,11 @@ public function getProducts(Request $request)
     }
     return response()->json(['products' => $products], 200);
 }
+
+
+
+
+
 
 
 
@@ -393,7 +404,25 @@ public function deleteProduct($product_id){
     }
     
 
+    public function bulkDeleteProducts(Request $request){
+        $validator = Validator::make($request->all(), [
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'exists:products,id',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+        
+        Product::whereIn('id', $request->product_ids)->delete();
+        return response()->json([
+            'message' => 'Products deleted successfully'
+        ], 200);
+     
+    }
 
 
 
@@ -434,9 +463,7 @@ public function deleteProduct($product_id){
         $stock->at_price = $request->priceperunit;
         $stock->save();
 
-        return response()->json(['message' => 'Product stock adjected successfully'], 200);
-
-        
+        return response()->json(['message' => 'Product stock adjected successfully'], 200); 
     }
 
 
@@ -463,6 +490,7 @@ public function deleteProduct($product_id){
 
 
 
+  
     public function addTaxRate(Request $request){
         $validator = Validator::make($request->all(), [
             'tax_name' => 'required|string',
@@ -488,7 +516,7 @@ public function deleteProduct($product_id){
 
 
 
-
+    // Caterories section
     public function addProductCategory(Request $request){
         $validator = Validator::make($request->all(), [
             'product_category' => 'required'
@@ -511,6 +539,8 @@ public function deleteProduct($product_id){
         return response()->json($productcategories, 200);
     }
 
+    
+
     public function addBaseUnit(Request $request){
         $validator = Validator::make($request->all(), [
             'product_base_unit' => 'required'
@@ -526,6 +556,53 @@ public function deleteProduct($product_id){
 
 
 
+    // public function updateCategory(Request $request){
+    //     $validator = Validator::make($request->all(), [
+    //         'product_category_id' => 'required|numeric'
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return response()->json($validator->errors(), 400);
+    //     }
+    //     $productcategory = Productcategory::findOrFail($request->product_category_id);
+    //     $productcategory->product_category = $request->product_category;
+    //     $productcategory->save();
+    //     return response()->json(['message' => 'Product category updated successfully'], 200);
+    // }
+
+
+    public function updateCategory(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'product_category_id' => 'required|numeric',
+        'product_category' => 'required|string'
+    ]);
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 400);
+    }
+    $productcategory = Productcategory::findOrFail($request->product_category_id);
+    $productcategory->update([
+        'product_category' => $request->product_category,
+    ]);
+
+    return response()->json(['message' => 'Product category updated successfully'], 200);
+}
+
+
+public function deleteProductCategory($category_id)
+{
+    $productcategory = Productcategory::findOrFail($category_id);
+    $productcategory->delete();
+    return response()->json(['message' => 'Product category deleted successfully'], 200);
+}
+
+
+public function bulkDeleteCategories(Request $request){
+    $validator = Validator::make($request->all(), [
+        'category_ids' => 'required|array',
+        'category_ids.*' => 'exists:product_categories,id',
+    ]);
+    dd($request->all());
+}
 
 
     public function getBaseUnit(){

@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/editproductdetails', [ProductController::class, 'editProdutDetails']);
-
+Route::post('/bulkdeleteproducts', [ProductController::class, 'bulkDeleteProducts']);
 
 
 Route::post('/adjectproduct', [ProductController::class, 'adjectProduct']);
@@ -75,9 +75,12 @@ Route::get('/gettaxgroup', [ProductController::class, 'getTaxGroup']);
 Route::post('/addtaxrate', [ProductController::class, 'addTaxRate']);
 Route::get('/gettaxrate', [ProductController::class, 'getTaxRate']);
 
-
+       // Caterories section
 Route::post('/addproductcategory', [ProductController::class, 'addProductCategory']);
 Route::get('/getproductcategory', [ProductController::class, 'getProductCategory']);
+Route::post('/updatecategory', [ProductController::class, 'updateCategory']);
+Route::delete('/deleteproductcategory/{product_category_id}', [ProductController::class, 'deleteProductCategory']);
+Route::post('/bulkdeletecategories', [ProductController::class, 'bulkDeleteCategories']);
 Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
 Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
