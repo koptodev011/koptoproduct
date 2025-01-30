@@ -15,7 +15,7 @@ use App\Models\Productpricing;
 use App\Models\Productwholesaleprice;
 use App\Models\Productstock;
 use App\Models\Productimages;
-
+use App\Models\Productpurchesprice;
 use App\Models\Productonlinestore;
 use App\Models\Productstockadjectment;
 use Illuminate\Support\Facades\Auth;
@@ -37,8 +37,8 @@ class ProductController extends Controller
             'description' => 'nullable|string',    
             'mrp' => 'nullable|numeric',
             'product_category'=> 'nullable',
-            'assign_code'=> 'nullable|numeric',
-        
+            'assign_code'=> 'nullable|numeric|unique:products,item_code',
+            
             // sale price
             'sale_price'=> 'required',
             'sale_withorwithouttax'=> 'nullable',
@@ -49,9 +49,11 @@ class ProductController extends Controller
             'wholesale_price'=> 'nullable|numeric',
             'wholesale_withorwithouttax'=> 'nullable',
             'wholesale_min_quantity'=> 'nullable|numeric',
-            'purchese_price'=> 'nullable|numeric', // Corrected typo
-            'purchese_withorwithouttax'=> 'nullable',
-            'tax_id'=> 'nullable|numeric',
+
+            //Product Purchase price
+            'purchese_price'=> 'required|numeric',
+            'purchese_withorwithouttax'=> 'required|numeric',
+            'tax_id'=> 'required|numeric',
             
             // stock
             'opening_stock'=> 'nullable|numeric',
@@ -72,6 +74,7 @@ class ProductController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
+
 
         if($request->base_unit_id == $request->secondary_unit_id){
             return response()->json(['message' => 'Base unit and secondary unit cannot be same'], 400);
@@ -104,12 +107,14 @@ class ProductController extends Controller
         $saleprice->save();
 
 
-        $wholesaleprice = new Productwholesaleprice();
-        $wholesaleprice->whole_sale_price = $request->wholesale_price;
-        $wholesaleprice->withorwithouttax = $request->wholesale_withorwithouttax;
-        $wholesaleprice->wholesale_min_quantity = $request->wholesale_min_quantity;
-        $wholesaleprice->product_id = $product->id;
-        $wholesaleprice->save();
+        if ($request->has('wholesale_price')) {
+            $wholesaleprice = new Productwholesaleprice();
+            $wholesaleprice->whole_sale_price = $request->wholesale_price;
+            $wholesaleprice->withorwithouttax = $request->wholesale_withorwithouttax;
+            $wholesaleprice->wholesale_min_quantity = $request->wholesale_min_quantity;
+            $wholesaleprice->product_id = $product->id;
+            $wholesaleprice->save();
+        }
 
         $stock = new Productstock();
         $stock->product_stock = $request->opening_stock;
@@ -118,6 +123,14 @@ class ProductController extends Controller
         $stock->location = $request->location;
         $stock->product_id = $product->id;
         $stock->save();
+
+
+        $purchaseprice = new ();
+        $purchaseprice->product_purches_price = $request->purchese_price;
+        $purchaseprice->withoutorwithtax = $request->purchese_withorwithouttax;
+        $purchaseprice->product_id = $product->id;
+        $purchaseprice->save();
+
 
         $onlinestore = new Productonlinestore();
         $onlinestore->online_store_price = $request->online_store_price;
@@ -144,7 +157,7 @@ class ProductController extends Controller
 
 
 
-    public function getProducts(Request $request)
+public function getProducts(Request $request)
 {
     $user = Auth::user();
     $products = Product::where('user_id', $user->id)
@@ -161,59 +174,52 @@ class ProductController extends Controller
     if ($products->isEmpty()) {
         return response()->json(['message' => 'No products found'], 404);
     }
-
     return response()->json(['products' => $products], 200);
 }
 
 
 
 
-
-
-
-
-
-
-public function editProdutDetails(Request $request){
-
+public function editProdutDetails(Request $request) {
     $validator = Validator::make($request->all(), [
-            'product_id' => 'required',
-            'product_name' => 'required',
-            'product_hsn' => 'required',
-            'base_unit_id' => 'required',
-            'secondary_unit_id' => 'required',
-            'conversion_rate' => 'required',
-            'description' => 'required',    
-            'mrp' => 'required',
-            'product_category'=> 'required',
-            'assign_code'=> 'required',
+        'product_id' => 'required',
+        'product_name' => 'nullable|string',
+        'product_hsn' => 'nullable',
+        'base_unit_id' => 'required|numeric',
+        'secondary_unit_id' => 'nullable|numeric',
+        'conversion_rate' => 'nullable|numeric',
+        'description' => 'nullable|string',    
+        'mrp' => 'nullable|numeric',
+        'product_category'=> 'nullable|numeric',
+        'assign_code'=> 'required',
 
-            // sale price
-            'sale_price'=> 'required',
-            'sale_withorwithouttax'=> 'required',
-            'discount_amount'=> 'required',
-            'discount_percentageoramount'=> 'required',
+        // sale price
+        'sale_price'=> 'required|numeric',
+        'sale_withorwithouttax'=> 'required|numeric',
+        'discount_amount'=> 'nullable|numeric',
+        'discount_percentageoramount'=> 'nullable|numeric',
 
-            // wholesale price
-            'wholesale_price'=> 'required',
-            'wholesale_withorwithouttax'=> 'required',
-            'wholesale_min_quantity'=> 'required',
-            'purchese_price'=> 'required',
-            'purchese_withorwithouttax'=> 'required',
-            'tax_id'=> 'required',
-            // stock
-            'opening_stock'=> 'required',
-            'at_price'=> 'required',
-            'min_stock'=> 'required',
-            'location'=> 'required',
+        // wholesale price
+        'wholesale_price'=> 'nullable|numeric',
+        'wholesale_withorwithouttax'=> 'nullable|numeric',
+        'wholesale_min_quantity'=> 'nullable|numeric',
+        'purchese_price'=> 'required|numeric',
+        'purchese_withorwithouttax'=> 'required|numeric',
+        'tax_id'=> 'required|numeric',
+        
+        // stock
+        'opening_stock'=> 'nullable|numeric',
+        'at_price'=> 'nullable|numeric',
+        'min_stock'=> 'nullable|numeric',
+        'location'=> 'nullable|string',
 
-            //online store
-            'online_store_price'=> 'required',
-            'online_store_product_description'=> 'required',
+        // online store
+        'online_store_price'=> 'nullable|numeric',
+        'online_store_product_description'=> 'nullable|string',
 
-            //product images
-            // 'product_images' => 'required|array',
-            // 'product_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        // product images
+        'product_images' => 'required|array',
+        'product_images.*' => 'image|mimes:jpeg,png,jpg,gif',
     ]);
 
     if ($validator->fails()) {
@@ -221,7 +227,7 @@ public function editProdutDetails(Request $request){
     }
 
     $product = Product::find($request->product_id);
-    
+
     if (!$product) {
         return response()->json(['error' => 'Product not found'], 404);
     }
@@ -237,8 +243,21 @@ public function editProdutDetails(Request $request){
         'tax_id' => $request->tax_id
     ]);
 
+    // Unlink and delete existing images in productimages table
+    DB::table('productimages')->where('product_id', $product->id)->delete();
+
+    // Upload new product images and store them in the productimages table
+    if ($request->hasFile('product_images')) {
+        foreach ($request->file('product_images') as $image) {
+            $imagePath = $image->store('product_images', 'public'); // Store image in public disk
+            DB::table('productimages')->insert([
+                'product_id' => $product->id,
+                'product_image' => $imagePath
+            ]);
+        }
+    }
+
     $unitconversion = Productunitconversion::where('product_id', $product->id)->first();
-   
     $unitconversion->update([
         'product_base_unit_id' => $request->base_unit_id,
         'product_secondary_unit_id' => $request->secondary_unit_id,
@@ -273,12 +292,13 @@ public function editProdutDetails(Request $request){
         'online_store_price' => $request->online_store_price,
         'online_product_description' => $request->online_store_product_description
     ]);
-    
+
     return response()->json([
         'message' => 'Product updated successfully',
         'product' => $product
     ], 200);
 }
+
 
 
 
@@ -327,36 +347,51 @@ public function deleteProduct($product_id){
 }
 
 
+
+
+
+
+
     public function assignCode(){
         $randomNumber = mt_rand(10000000000, 99999999999);
         return response()->json(['code' => $randomNumber], 200);
     }
 
 
-    public function getProductDetails(Request $request){
 
+
+
+    
+
+    public function getProductDetails(Request $request)
+    {
         $user = Auth::user();
         $product = Product::where('id', $request->product_id)
-        ->where('user_id', Auth::user()->id)
+            ->where('user_id', $user->id)
             ->with([
-                'unitConversion', 
-                'pricing',       
-                'wholesalePrice', 
-                'stock',        
-                'onlineStore'   
+                'unitConversion',
+                'pricing',
+                'wholesalePrice',
+                'stock',
+                'onlineStore'
             ])
             ->first();
-
-
-
+    
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
-
-        return response()->json(['product' => $product], 200);
+    
+        $salePrice = $product->pricing->sale_price ?? 0;
+        $stockQuantity = $product->stock->product_stock ?? 0;
+        $stockValue = $salePrice * $stockQuantity;
+    
+        $product->stock_value = $stockValue;
+    
+        return response()->json([
+            'product' => $product
+        ], 200);
     }
-
-
+    
 
 
 

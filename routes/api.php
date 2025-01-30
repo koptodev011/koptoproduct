@@ -62,9 +62,10 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::post('/addproduct', [ProductController::class, 'addProduct']);
      Route::get('/getproducts', [ProductController::class, 'getProducts']);
      Route::get('/getproductdetails', [ProductController::class, 'getProductDetails']);
-     Route::post('/editproductdetails', [ProductController::class, 'editProdutDetails']);
      Route::delete('/deleteproduct/{product_id}', [ProductController::class, 'deleteProduct']);
 });
+
+Route::post('/editproductdetails', [ProductController::class, 'editProdutDetails']);
 
 
 

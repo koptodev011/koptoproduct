@@ -76,6 +76,7 @@ class AuthController extends Controller
         $user->email = $request->email;
         $user->mobile_number = $request->mobile_number;
         $user->password = Hash::make($request->password);
+        $user->role_id = 1;
         $user->save();
 
         $tenant = new Tenant();
@@ -125,11 +126,12 @@ public function profile(){
 
 
  
- public function getAllStaff(){
-    $user = auth()->user();
-    $staff = Staff::where('user_id', $user->id)->get();
-    return response()->json($staff, 200);
+ public function getAllStaff()
+ {
+     $user = auth()->user()->load('staffs');
+     return response()->json($user, 200);
  }
+ 
 
 
  public function updateStaffDetails(Request $request){
