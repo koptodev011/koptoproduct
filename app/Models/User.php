@@ -28,6 +28,11 @@ class User extends Authenticatable
         return $this->hasMany(Tenant::class);
     }
 
+    public function staffs()
+    {
+        return $this->hasMany(Staff::class, 'user_id');
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
