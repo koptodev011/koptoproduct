@@ -136,6 +136,81 @@ class TenantController extends Controller
     }
 
 
+    // public function updateMainBranchDetails(Request $request){
+    //     $validator = Validator::make($request->all(), [
+    //         'tenant_id' => 'required|numeric',
+    //         'business_name' => 'required|string',
+    //         'business_types' => 'nullable|numeric|exists:business_types,id',
+    //         'business_address' => 'nullable|string',
+    //         'business_email' => 'nullable|email',
+    //         'phone_number' => 'nullable|string',
+    //         'business_categories' => 'nullable|numeric|exists:business_categories,id',
+    //         'TIN_number' => 'nullable|string',
+    //         'state' => 'nullable|numeric|exists:states,id',
+    //         'business_email' => 'nullable|email',
+    //         'pin_code' => 'nullable|numeric|digits:6',
+    //         'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+    //         'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',   
+    //     ]);
+    
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 400);
+    //     }
+    //     $user = auth()->user(); 
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'User not authenticated'
+    //         ], 400);
+    //     }
+    //     $tenant = Tenant::where('user_id', $user->id)
+    //     ->where('id',$request->tenant_id)->first();
+
+    //     $tenant->update([
+    //         'business_name' => $request->business_name,
+    //         'business_type' => $request->business_types,
+    //         'business_address' => $request->business_address,
+    //         'phone_number' => $request->phone_number,
+    //         'business_category' => $request->business_categories,
+    //         'TIN_number' => $request->TIN_number,
+    //         'state' => $request->state,
+    //         'business_email' => $request->business_email,
+    //         'pin_code' => $request->pin_code,
+    //     ]);
+
+    //     if (!$tenant) {
+    //         return response()->json([
+    //             'message' => 'Tenant not found'
+    //         ], 404);
+    //     }
+
+    //     if ($request->hasFile('business_logo')) {
+    //         if ($tenant->business_logo) {
+    //             Storage::delete(str_replace('/storage/', '', $tenant->business_logo));
+    //         }
+    //         $logoPath = $request->file('business_logo')->store('logos', 'public');
+    //         $tenant->business_logo = Storage::url($logoPath);
+    //     }
+    
+    //     if ($request->hasFile('business_signature')) {
+    //         if ($tenant->business_signature) {
+    //             Storage::delete(str_replace('/storage/', '', $tenant->business_signature));
+    //         }
+    //         $signaturePath = $request->file('business_signature')->store('signatures', 'public');
+    //         $tenant->business_signature = Storage::url($signaturePath);
+    //     }
+    //     $tenant->update($request->except(['business_logo', 'business_signature']));
+    
+    //     return response()->json([
+    //         'message' => 'Tenant details updated successfully',
+    //         'tenant' => $tenant
+    //     ], 200);
+    // }
+
+
+
 
 
 
@@ -197,6 +272,7 @@ class TenantController extends Controller
     // }
 
 
+    
     public function addNewFirm(Request $request)
     {
         $validator = Validator::make($request->all(), [

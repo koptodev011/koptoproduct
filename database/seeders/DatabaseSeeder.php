@@ -19,7 +19,10 @@ class DatabaseSeeder extends Seeder
         $this->call(BusinessTypesSeeder::class);
         $this->call(BusinessCategorySeeder::class);
         $this->call(StateSeeder::class);
+        $this->call(ProductBaseUnitSeeder::class);
         $this->call(RoleSeeder::class);
+        $this->call(ProductTaxGroupSeeder::class);
+        $this->call(ProductTaxRateSeeder::class);
         $this->call(UserSeeder::class);
     }
 }
