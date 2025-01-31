@@ -280,6 +280,10 @@ class TenantController extends Controller
     // }
 
 
+
+
+
+
     
     public function addNewFirm(Request $request)
     {
@@ -349,6 +353,8 @@ class TenantController extends Controller
         ], 200);
     }
     
+
+
 
 
 
@@ -455,6 +461,8 @@ class TenantController extends Controller
             'tenants' => $tenantsData
         ], 200);
     }
+    
+
     
     
     public function deleteParty(){
