@@ -381,14 +381,76 @@ class TenantController extends Controller
 
 
     
+    // public function getActiveTanent(){
+    //     $user = auth()->user(); 
+    //     $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])->where('user_id', $user->id)->where('isactive', 1)->get();
+    //     if (!$tenants) {
+    //         return response()->json([
+    //             'message' => 'No active tenant found'
+    //         ], 404);
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'Tenant details retrieved successfully',
+    //         'tenants' => $tenants
+    //     ], 200);
+    // }
+
+
+
     public function getActiveTanent(){
         $user = auth()->user(); 
-        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])->where('user_id', $user->id)->where('isactive', 1)->get();
+        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])
+                        ->where('user_id', $user->id)
+                        ->where('isactive', 1)
+                        ->get();
+    
+        if ($tenants->isEmpty()) {
+            return response()->json([
+                'message' => 'No active tenant found'
+            ], 404);
+        }
+    
+        $tenantsData = $tenants->map(function($tenant) {
+            return [
+                'id' => $tenant->id,
+                'business_name' => $tenant->business_name,
+                'business_address' => $tenant->business_address,
+                'phone_number' => $tenant->phone_number,
+                'TIN_number' => $tenant->TIN_number,
+                'business_email' => $tenant->business_email,
+                'pin_code' => $tenant->pin_code,
+                'business_logo' => $tenant->business_logo,
+                'business_signature' => $tenant->business_signature,
+                'isactive' => $tenant->isactive,
+                'user' => [
+                    'id' => $tenant->user->id,
+                    'role_id' => $tenant->user->role_id,
+                    'name' => $tenant->user->name,
+                    'email' => $tenant->user->email,
+                    'mobile_number' => $tenant->user->mobile_number
+                ],
+                'businesstype' => [
+                    'id' => $tenant->businesstype->id,
+                    'business_type' => $tenant->businesstype->business_type
+                ],
+                'businesscategory' => [
+                    'id' => $tenant->businesscategory->id,
+                    'business_category' => $tenant->businesscategory->business_category
+                ],
+                'state' => [
+                    'id' => $tenant->state->id,
+                    'state' => $tenant->state->state
+                ]
+            ];
+        });
+    
         return response()->json([
             'message' => 'Tenant details retrieved successfully',
-            'tenants' => $tenants
+            'tenants' => $tenantsData
         ], 200);
     }
+    
     
     public function deleteParty(){
         dd("Working");

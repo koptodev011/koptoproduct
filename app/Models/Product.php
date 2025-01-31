@@ -13,7 +13,7 @@ class Product extends Model
         'product_base_unit',
         'description',
         'mrp',
-        'category_id',
+        'product_category_id',
         'item_code',
         'tax_id'
     ];

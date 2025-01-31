@@ -36,7 +36,7 @@ class ProductController extends Controller
             'conversion_rate' => 'nullable',
             'description' => 'nullable|string',    
             'mrp' => 'nullable|numeric',
-            'product_category'=> 'nullable',
+            'product_category_id'=> 'nullable|exists:productcategories,id',
             'assign_code'=> 'nullable|numeric|unique:products,item_code',
             
             // sale price
@@ -87,7 +87,7 @@ class ProductController extends Controller
         $product->description = $request->description;
         $product->mrp = $request->mrp;
         $product->product_base_unit = $request->base_unit_id;
-        $product->category_id = $request->product_category;
+        $product->product_category_id = $request->product_category_id;
         $product->tax_id = $request->tax_id;
         $product->save();
 
@@ -535,40 +535,11 @@ public function deleteProduct($product_id){
 
 
     public function getProductCategory(){
-        $productcategories = Productcategory::all();
+        $productcategories = Productcategory::where('is_delete', false)->get();
         return response()->json($productcategories, 200);
     }
 
     
-
-    public function addBaseUnit(Request $request){
-        $validator = Validator::make($request->all(), [
-            'product_base_unit' => 'required'
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
-        }
-        $productbaseunit = new Productbaseunit();
-        $productbaseunit->product_base_unit = $request->product_base_unit;
-        $productbaseunit->save();
-        return response()->json(['message' => 'Product base unit created successfully'], 200);
-    }
-
-
-
-    // public function updateCategory(Request $request){
-    //     $validator = Validator::make($request->all(), [
-    //         'product_category_id' => 'required|numeric'
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 400);
-    //     }
-    //     $productcategory = Productcategory::findOrFail($request->product_category_id);
-    //     $productcategory->product_category = $request->product_category;
-    //     $productcategory->save();
-    //     return response()->json(['message' => 'Product category updated successfully'], 200);
-    // }
-
 
     public function updateCategory(Request $request)
 {
@@ -590,24 +561,86 @@ public function deleteProduct($product_id){
 
 public function deleteProductCategory($category_id)
 {
-    $productcategory = Productcategory::findOrFail($category_id);
-    $productcategory->delete();
+    $productcategory = Productcategory::where('id', $category_id)->first();
+    if (!$productcategory) {
+        return response()->json(['message' => 'Product category not found'], 404);
+    }
+    $productcategory->update([
+        'is_delete' => true
+    ]);
     return response()->json(['message' => 'Product category deleted successfully'], 200);
 }
 
 
-public function bulkDeleteCategories(Request $request){
+
+public function bulkDeleteCategories(Request $request)
+{
     $validator = Validator::make($request->all(), [
         'category_ids' => 'required|array',
-        'category_ids.*' => 'exists:product_categories,id',
+        'category_ids.*' => 'exists:productcategories,id',
     ]);
-    dd($request->all());
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 400);
+    }
+    $productCategories = Productcategory::whereIn('id', $request->category_ids)->get();
+    if ($productCategories->isEmpty()) {
+        return response()->json(['message' => 'No categories found'], 404);
+    }
+    Productcategory::whereIn('id', $request->category_ids)->update(['is_delete' => true]);
+
+    return response()->json(['message' => 'Categories deleted successfully'], 200);
 }
+
+
+
+
+
+
+    public function addBaseUnit(Request $request){
+        $validator = Validator::make($request->all(), [
+            'product_base_unit' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $productbaseunit = new Productbaseunit();
+        $productbaseunit->product_base_unit = $request->product_base_unit;
+        $productbaseunit->save();
+        return response()->json(['message' => 'Product base unit created successfully'], 200);
+    }
+
+    public function updateBaseUnit(Request $request){
+        $validator = Validator::make($request->all(), [
+            'product_base_unit_id' => 'required|numeric',
+            'product_base_unit' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $productbaseunit = Productbaseunit::findOrFail($request->product_base_unit_id);
+        $productbaseunit->update([
+            'product_base_unit' => $request->product_base_unit,
+        ]);
+        return response()->json(['message' => 'Product base unit updated successfully'], 200);
+    }
 
 
     public function getBaseUnit(){
-        $productbaseunits = Productbaseunit::all();
+        $productbaseunits = Productbaseunit::where('is_delete', false)->get();
         return response()->json($productbaseunits, 200);
+    }
+
+    public function deleteBaseUnit($base_unit_id){
+        $productbaseunit = Productbaseunit::where('id', $base_unit_id)->first();
+        if (!$productbaseunit) {
+            return response()->json(['message' => 'Product base unit not found'], 404);
+        }
+        $productbaseunit->update([
+            'is_delete' => true
+        ]);
+        return response()->json(['message' => 'Product base unit deleted successfully'], 200);
     }
      
 }
+
+

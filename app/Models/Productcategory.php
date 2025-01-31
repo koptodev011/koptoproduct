@@ -9,6 +9,7 @@ class Productcategory extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'product_category'
+        'product_category',
+        'is_delete'
     ];
 }

@@ -83,8 +83,10 @@ Route::delete('/deleteproductcategory/{product_category_id}', [ProductController
 Route::post('/bulkdeletecategories', [ProductController::class, 'bulkDeleteCategories']);
 Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
 Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
+Route::post('/updatebaseunit', [ProductController::class, 'updateBaseUnit']);
+Route::delete('/deletebaseunit/{product_base_unit_id}', [ProductController::class, 'deleteBaseUnit']);
+Route::post('/bulkdeletebaseunits', [ProductController::class, 'bulkDeleteBaseUnits']);
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
-
 
 
 
