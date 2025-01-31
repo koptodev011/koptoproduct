@@ -28,11 +28,8 @@ class TenantController extends Controller
 
     public function getAllBranchDetails()
     {
-        $user = auth()->user(); 
-        // dd($user);
+        $user = auth()->user();
         $tenants = User::with('tenants','tenants.businesstype','tenants.businesscategory','tenants.state')->where('id', $user->id)->get();
-        // $tenants = Tenant::with('user', 'businesstype', 'businesscategory', 'state')->where('user_id', $user->id)->get();
-        // $tenants = Tenant::with('businesstype')->get();
         return response()->json([
             'message' => 'Tenant details retrieved successfully',
             'tenants' => $tenants
@@ -114,11 +111,22 @@ class TenantController extends Controller
 
         if ($request->hasFile('business_logo')) {
             if ($tenant->business_logo) {
-                Storage::delete(str_replace('/storage/', '', $tenant->business_logo));
+                $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
+                if (Storage::disk('public')->exists($previousLogoPath)) {
+                    Storage::disk('public')->delete($previousLogoPath);
+                }
             }
             $logoPath = $request->file('business_logo')->store('logos', 'public');
             $tenant->business_logo = Storage::url($logoPath);
+        } elseif ($request->input('business_logo') === null && $tenant->business_logo) {
+            $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
+            if (Storage::disk('public')->exists($previousLogoPath)) {
+                Storage::disk('public')->delete($previousLogoPath);
+            }
+            $tenant->business_logo = null;
         }
+        
+        
     
         if ($request->hasFile('business_signature')) {
             if ($tenant->business_signature) {
@@ -302,13 +310,10 @@ class TenantController extends Controller
                 'message' => 'User not authenticated'
             ], 400);
         }
-    
-        // Deactivate previous active tenant
         Tenant::where('user_id', $user->id)
             ->where('isactive', 1)
             ->update(['isactive' => 0]);
-    
-        // Create new tenant
+
         $tenant = new Tenant();
         $tenant->user_id = $user->id;
         $tenant->business_name = $request->business_name;
@@ -320,8 +325,8 @@ class TenantController extends Controller
         $tenant->state_id = $request->state_id;
         $tenant->business_email = $request->business_email;
         $tenant->pin_code = $request->pin_code;
-    
-        // Explicitly set to NULL before checking for uploaded files
+
+
         $tenant->business_logo = null;
         $tenant->business_signature = null;
     
