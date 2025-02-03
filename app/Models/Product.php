@@ -57,4 +57,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductImages::class, 'product_id', 'id');
     }
+
+    public function productUnitConversion()
+    {
+        return $this->hasOne(Productunitconversion::class, 'id', 'productconversion_id');
+    }
 }
