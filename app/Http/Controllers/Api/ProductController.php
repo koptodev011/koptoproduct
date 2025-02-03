@@ -609,6 +609,9 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Product base unit created successfully'], 200);
     }
 
+
+
+    
     public function updateBaseUnit(Request $request){
         $validator = Validator::make($request->all(), [
             'product_base_unit_id' => 'required|numeric',
@@ -640,7 +643,42 @@ public function bulkDeleteCategories(Request $request)
         ]);
         return response()->json(['message' => 'Product base unit deleted successfully'], 200);
     }
-     
+
+
+
+    public function bulkDeleteBaseUnits(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'base_unit_ids' => 'required|array',
+            'base_unit_ids.*' => 'exists:productbaseunits,id',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+        $productBaseUnits = Productbaseunit::whereIn('id', $request->base_unit_ids)->get();
+        if ($productBaseUnits->isEmpty()) {
+            return response()->json(['message' => 'No base units found'], 404);
+        }
+        Productbaseunit::whereIn('id', $request->base_unit_ids)->update(['is_delete' => true]);
+    
+        return response()->json(['message' => 'Base units deleted successfully'], 200);
+    }
+
+    public function addConversionunits(Request $request){  
+        dd("Working"); 
+        $validator = Validator::make($request->all(), [
+            'product_base_unit_id' => 'required|exists:productbaseunits,id',
+            'conversion_factor' => 'required|numeric',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+        $productbaseunit = Productbaseunit::findOrFail($request->product_base_unit_id);
+        $productbaseunit->updateOrCreate([
+            'product_base_unit' => $request->product_base_unit,
+        ]);
+        return response()->json(['message' => 'Product base unit created successfully'], 200);
+    }
 }
 
 

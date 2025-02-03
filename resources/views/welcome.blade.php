@@ -8,6 +8,6 @@
 </head>
 <body>
     <h1>Koptotech Product Backend</h1>
-    <h1>Written By Ajinkya Inchanalkar</h1>
+    <h1>Written By Ajinkya</h1>
 </body>
 </html>
