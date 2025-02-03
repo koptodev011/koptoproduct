@@ -292,12 +292,13 @@ class TenantController extends Controller
 
 
 
-    public function getActiveTanent(){
-        $user = auth()->user(); 
+    public function getActiveTanent()
+    {
+        $user = auth()->user();
         $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])
-                        ->where('user_id', $user->id)
-                        ->where('isactive', 1)
-                        ->get();
+            ->where('user_id', $user->id)
+            ->where('isactive', 1)
+            ->get();
     
         if ($tenants->isEmpty()) {
             return response()->json([
@@ -305,7 +306,7 @@ class TenantController extends Controller
             ], 404);
         }
     
-        $tenantsData = $tenants->map(function($tenant) {
+        $tenantsData = $tenants->map(function ($tenant) {
             return [
                 'id' => $tenant->id,
                 'business_name' => $tenant->business_name,
@@ -317,25 +318,25 @@ class TenantController extends Controller
                 'business_logo' => $tenant->business_logo,
                 'business_signature' => $tenant->business_signature,
                 'isactive' => $tenant->isactive,
-                'user' => [
+                'user' => $tenant->user ? [
                     'id' => $tenant->user->id,
                     'role_id' => $tenant->user->role_id,
                     'name' => $tenant->user->name,
                     'email' => $tenant->user->email,
                     'mobile_number' => $tenant->user->mobile_number
-                ],
-                'businesstype' => [
+                ] : null,
+                'businesstype' => $tenant->businesstype ? [
                     'id' => $tenant->businesstype->id,
                     'business_type' => $tenant->businesstype->business_type
-                ],
-                'businesscategory' => [
+                ] : null,
+                'businesscategory' => $tenant->businesscategory ? [
                     'id' => $tenant->businesscategory->id,
                     'business_category' => $tenant->businesscategory->business_category
-                ],
-                'state' => [
+                ] : null,
+                'state' => $tenant->state ? [
                     'id' => $tenant->state->id,
                     'state' => $tenant->state->state
-                ]
+                ] : null
             ];
         });
     
@@ -344,6 +345,7 @@ class TenantController extends Controller
             'tenants' => $tenantsData
         ], 200);
     }
+    
     
 
     

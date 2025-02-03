@@ -79,6 +79,15 @@ class ProductController extends Controller
         if($request->base_unit_id == $request->secondary_unit_id){
             return response()->json(['message' => 'Base unit and secondary unit cannot be same'], 400);
         }
+        
+        $unitconversion = new Productunitconversion();
+        $unitconversion->product_base_unit_id = $request->base_unit_id;
+        $unitconversion->product_secondary_unit_id = $request->secondary_unit_id;
+        $unitconversion->conversion_rate = $request->conversion_rate;
+        $unitconversion->save();
+
+        
+
         $product = new Product();
         $product->user_id = $user->id;
         $product->product_name = $request->product_name;
@@ -89,14 +98,9 @@ class ProductController extends Controller
         $product->product_base_unit = $request->base_unit_id;
         $product->product_category_id = $request->product_category_id;
         $product->tax_id = $request->tax_id;
+        $product->productconversion_id = $unitconversion->id;
         $product->save();
 
-        $unitconversion = new Productunitconversion();
-        $unitconversion->product_base_unit_id = $request->base_unit_id;
-        $unitconversion->product_secondary_unit_id = $request->secondary_unit_id;
-        $unitconversion->conversion_rate = $request->conversion_rate;
-        $unitconversion->product_id = $product->id;
-        $unitconversion->save();
         
         $saleprice = new Productpricing();
         $saleprice->sale_price = $request->sale_price;
@@ -163,23 +167,45 @@ class ProductController extends Controller
 
 
 
+// public function getProducts(Request $request)
+// {
+//     $user = Auth::user();
+//     $products = Product::where('user_id', $user->id)
+//         ->with([ 
+//             'pricing',       
+//             'wholesalePrice', 
+//             'stock',        
+//             'onlineStore',
+//             'images' 
+//         ])
+//         ->get();
+
+//     if ($products->isEmpty()) {
+//         return response()->json(['message' => 'No products found'], 404);
+//     }
+//     return response()->json(['products' => $products], 200);
+// }
+
+
+
 public function getProducts(Request $request)
 {
     $user = Auth::user();
     $products = Product::where('user_id', $user->id)
-        ->with([
-            'unitConversion', 
+        ->with([ 
             'pricing',       
             'wholesalePrice', 
             'stock',        
             'onlineStore',
-            'images' 
+            'productUnitConversion',
+            'images'
         ])
         ->get();
 
     if ($products->isEmpty()) {
         return response()->json(['message' => 'No products found'], 404);
     }
+
     return response()->json(['products' => $products], 200);
 }
 
@@ -190,8 +216,8 @@ public function getProducts(Request $request)
 
 
 
-
 public function editProdutDetails(Request $request) {
+    
     $validator = Validator::make($request->all(), [
         'product_id' => 'required',
         'product_name' => 'nullable|string',
@@ -254,13 +280,10 @@ public function editProdutDetails(Request $request) {
         'tax_id' => $request->tax_id
     ]);
 
-    // Unlink and delete existing images in productimages table
     DB::table('productimages')->where('product_id', $product->id)->delete();
-
-    // Upload new product images and store them in the productimages table
     if ($request->hasFile('product_images')) {
         foreach ($request->file('product_images') as $image) {
-            $imagePath = $image->store('product_images', 'public'); // Store image in public disk
+            $imagePath = $image->store('product_images', 'public');
             DB::table('productimages')->insert([
                 'product_id' => $product->id,
                 'product_image' => $imagePath
@@ -268,7 +291,7 @@ public function editProdutDetails(Request $request) {
         }
     }
 
-    $unitconversion = Productunitconversion::where('product_id', $product->id)->first();
+    $unitconversion = $product->productUnitConversion;
     $unitconversion->update([
         'product_base_unit_id' => $request->base_unit_id,
         'product_secondary_unit_id' => $request->secondary_unit_id,
@@ -380,11 +403,12 @@ public function deleteProduct($product_id){
         $product = Product::where('id', $request->product_id)
             ->where('user_id', $user->id)
             ->with([
-                'unitConversion',
+                'productUnitConversion',
                 'pricing',
                 'wholesalePrice',
                 'stock',
-                'onlineStore'
+                'onlineStore',
+                'images'
             ])
             ->first();
     
@@ -403,6 +427,9 @@ public function deleteProduct($product_id){
         ], 200);
     }
     
+
+
+
 
     public function bulkDeleteProducts(Request $request){
         $validator = Validator::make($request->all(), [
@@ -431,7 +458,7 @@ public function deleteProduct($product_id){
     public function adjectProduct(Request $request){
         $validator = Validator::make($request->all(), [
             'addorreduct_product_stock' => 'required',
-            'product_id' => 'required',
+            'product_id' => 'required|exists:products,id',
             'stock'=> 'required',
             'priceperunit'=> 'required',
             'details'=> 'required'
@@ -465,6 +492,13 @@ public function deleteProduct($product_id){
 
         return response()->json(['message' => 'Product stock adjected successfully'], 200); 
     }
+
+
+
+
+
+
+
 
 
 

@@ -17,4 +17,9 @@ class Productunitconversion extends Model
     {
         return $this->hasOne(Productunitconversion::class);
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'productconversion_id', 'id');
+    }
 }
