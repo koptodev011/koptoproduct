@@ -664,15 +664,19 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Base units deleted successfully'], 200);
     }
 
+    
     public function addConversionunits(Request $request){  
-        dd("Working"); 
         $validator = Validator::make($request->all(), [
-            'product_base_unit_id' => 'required|exists:productbaseunits,id',
-            'conversion_factor' => 'required|numeric',
+            // 'product_id' => 'required|exists:products,id',
+            'base_unit_id' => 'required|exists:productbaseunits,id',
+            'secondary_unit_id' => 'required|exists:productbaseunits,id',
+            'conversion_rate' => 'required|numeric'
         ]);
+        
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
+
         $productbaseunit = Productbaseunit::findOrFail($request->product_base_unit_id);
         $productbaseunit->updateOrCreate([
             'product_base_unit' => $request->product_base_unit,
