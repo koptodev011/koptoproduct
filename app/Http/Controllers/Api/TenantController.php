@@ -57,20 +57,34 @@ class TenantController extends Controller
             return response()->json($validator->errors(), 400);
         }
         $cities = City::where('state_id', $request->state_id)->get();
-        return response()->json($cities, 200);
+        $mappedCities = $cities->map(function($city) {
+            return [
+                'id' => $city->id,
+                'city_name' => $city->city_name,
+            ];
+        });
+        return response()->json($mappedCities, 200);
     }
 
 
-    public function getCityPinCode(Request $request){
+    public function getCityPinCode(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'city_id' => 'required|numeric',
         ]);
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-        $city = City::where('id', $request->city_id)->first();
-        return response()->json($city, 200);
+        $city = City::find($request->city_id);
+        if (!$city) {
+            return response()->json(['error' => 'City not found'], 404);
+        }
+        return response()->json([
+            'id' => $city->id,
+            'pin_code' => $city->pin_code,
+        ], 200);
     }
+    
 
 
 
