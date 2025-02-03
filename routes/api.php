@@ -27,7 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/updatestaffdetails', [AuthController::class, 'updateStaffDetails']);
 Route::delete('/deletestaff/{staff_id}', [AuthController::class, 'deleteStaff']);
-
+Route::get('/getcitiesofstate', [TenantController::class, 'getCitiesOfState']);
+Route::get('/getcitypincode', [TenantController::class, 'getCityPinCode']);
 
 // All Party Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -87,6 +88,7 @@ Route::post('/updatebaseunit', [ProductController::class, 'updateBaseUnit']);
 Route::delete('/deletebaseunit/{product_base_unit_id}', [ProductController::class, 'deleteBaseUnit']);
 Route::post('/bulkdeletebaseunits', [ProductController::class, 'bulkDeleteBaseUnits']);
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
+Route::post('/addunitconversion', [ProductController::class, 'addConversionunits']);
 
 
 
