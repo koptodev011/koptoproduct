@@ -157,17 +157,19 @@ public function profile(){
 
 
  public function updateStaffDetails(Request $request){
-    $staff = Staff::find($request->staff_id);
+    $staff = User::find($request->staff_id);
+
     if (!$staff) {
         return response()->json([
             'message' => 'Staff member not found'
         ], 404);
     }
+
     $validator = Validator::make($request->all(), [
-        'staff_id' => 'required|numeric|exists:staff,id',
+        'staff_id' => 'required|numeric|exists:users,id',
         'name' => 'required|string',
-        'email' => 'required|email|unique:staff,email,'.$staff->id,
-        'mobile_number' => 'required|numeric|digits:10|unique:staff,mobile_number,'.$staff->id
+        'email' => 'required|email|unique:users,email,'.$staff->id,
+        'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number,'.$staff->id
     ]);
 
     if ($validator->fails()) {
@@ -188,7 +190,8 @@ public function profile(){
 
 
 public function deleteStaff(Request $request){
-    $staff = Staff::find($request->staff_id);
+    $staff = User::where('id',$request->staff_id)->where('role_id',3)->first();
+
     if (!$staff) {
         return response()->json([
             'message' => 'Staff member not found'
