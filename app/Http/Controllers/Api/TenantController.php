@@ -103,6 +103,7 @@ class TenantController extends Controller
             'state_id' => 'nullable|numeric|exists:states,id',
             'business_email' => 'nullable|email',
             'pin_code' => 'nullable|numeric|digits:6',
+            'city_id' => 'nullable|numeric',
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
             'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',   
         ]);
@@ -132,6 +133,7 @@ class TenantController extends Controller
             'state_id' => $request->state_id,
             'business_email' => $request->business_email,
             'pin_code' => $request->pin_code,
+            'city_id' => $request->city_id
         ]);
 
         if (!$tenant) {
@@ -309,10 +311,12 @@ class TenantController extends Controller
     public function getActiveTanent()
     {
         $user = auth()->user();
-        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state'])
-            ->where('user_id', $user->id)
-            ->where('isactive', 1)
-            ->get();
+        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state', 'city']) // Include city
+        ->where('user_id', $user->id)
+        ->where('isactive', 1)
+        ->get();
+
+       
     
         if ($tenants->isEmpty()) {
             return response()->json([
@@ -350,6 +354,11 @@ class TenantController extends Controller
                 'state' => $tenant->state ? [
                     'id' => $tenant->state->id,
                     'state' => $tenant->state->state
+                ] : null,
+                'city' => $tenant->city ? [ // Corrected from 'cities' to 'city'
+                    'id' => $tenant->city->id,
+                    'city_name' => $tenant->city->city_name, // Use city_name from the city relationship
+                    'pin_code' => $tenant->city->pin_code // Use the pin_code from the city relationship
                 ] : null
             ];
         });

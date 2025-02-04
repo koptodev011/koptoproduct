@@ -20,7 +20,8 @@ class Tenant extends Model
         'business_logo',
         'business_signature',
         'user_id',
-        'isactive'
+        'isactive',
+        'city_id'
     ];
 
     public function user()
@@ -45,4 +46,10 @@ class Tenant extends Model
     {
         return $this->belongsTo(State::class);
     }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city_id'); // Specify the foreign key if it’s not 'city_id'
+    }
+  
 }
