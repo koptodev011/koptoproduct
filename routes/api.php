@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PartyController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\SalesController;
+use App\Http\Controllers\Api\GrowYourBusiness;
 
 // Auth apis
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -130,3 +131,14 @@ Route::post('/paymentout', [PurchaseController::class, 'paymentOut']);
 Route::post('/purchaseorder', [PurchaseController::class, 'purchaseOrder']);
 Route::post('/convertpurchaseordertopurchase', [PurchaseController::class, 'convertPurchaseOrderToPurchase']);
 Route::post('/purchasereturn', [PurchaseController::class, 'purchaseReturn']);
+
+
+
+
+// Online store all apis
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/convertstoreintoonlinestore', [GrowYourBusiness::class, 'convertStoreIntoOnlineStore']);
+    Route::get('/getonlineproducts', [GrowYourBusiness::class, 'getOnlineProducts']); 
+});
+Route::post('/addtocart',[GrowYourBusiness::class,'addToCart']);
+

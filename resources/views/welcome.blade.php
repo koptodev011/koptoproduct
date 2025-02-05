@@ -7,7 +7,6 @@
     <title>Product Backend</title>
 </head>
 <body>
-    <h1>Koptotech Product Backend</h1>
-    <h1>Written By Ajinkya</h1>
+    <h1>Written By Aj</h1>
 </body>
 </html>

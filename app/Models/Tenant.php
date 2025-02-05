@@ -21,7 +21,8 @@ class Tenant extends Model
         'business_signature',
         'user_id',
         'isactive',
-        'city_id'
+        'city_id',
+        'isonlinestore'
     ];
 
     public function user()

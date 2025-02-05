@@ -144,6 +144,12 @@ class ProductController extends Controller
         $onlinestore->product_id = $product->id;
         $onlinestore->save();
 
+        if ($request->has('online_store_price') || $request->has('online_store_product_description')) {
+            $product->isonlineproduct = 1;
+        }
+    
+        $product->save();
+
         if ($request->has('product_images')) {
         foreach ($request->file('product_images') as $image) {
         $path = $image->store('product_images', 'public');
@@ -156,35 +162,6 @@ class ProductController extends Controller
     return response()->json(['message' => 'Product created successfully'], 200);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-// public function getProducts(Request $request)
-// {
-//     $user = Auth::user();
-//     $products = Product::where('user_id', $user->id)
-//         ->with([ 
-//             'pricing',       
-//             'wholesalePrice', 
-//             'stock',        
-//             'onlineStore',
-//             'images' 
-//         ])
-//         ->get();
-
-//     if ($products->isEmpty()) {
-//         return response()->json(['message' => 'No products found'], 404);
-//     }
-//     return response()->json(['products' => $products], 200);
-// }
 
 
 
@@ -386,16 +363,30 @@ public function deleteProduct($product_id){
 
 
 
-    public function assignCode(){
+    // public function assignCode(){
+    //     $randomNumber = mt_rand(10000000000, 99999999999);
+    //     $searchforuniquecode = Product::where('item_code',$randomNumber)->first();
+    //     if($searchforuniquecode){
+    //         dd("number was found");
+    //     }else{
+    //         dd("number was not found");
+    //     }
+    //     return response()->json(['code' => $randomNumber], 200);
+    // }
+
+    public function assignCode()
+{
+    do {
         $randomNumber = mt_rand(10000000000, 99999999999);
-        return response()->json(['code' => $randomNumber], 200);
-    }
+        $exists = Product::where('item_code', $randomNumber)->exists();
+    } while ($exists);
+
+    return response()->json(['code' => $randomNumber], 200);
+}
 
 
 
 
-
-    
 
     public function getProductDetails(Request $request)
     {
@@ -542,6 +533,8 @@ public function deleteProduct($product_id){
         $producttaxrate->save();
         return response()->json(['message' => 'Product tax rate created successfully'], 200);
     }
+
+    
 
     public function getTaxRate(){
         $producttaxrates = Producttaxrate::all();
@@ -698,25 +691,28 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Base units deleted successfully'], 200);
     }
 
-    
-    public function addConversionunits(Request $request){  
+    public function addConversionunits(Request $request)
+    { 
         $validator = Validator::make($request->all(), [
-            // 'product_id' => 'required|exists:products,id',
             'base_unit_id' => 'required|exists:productbaseunits,id',
             'secondary_unit_id' => 'required|exists:productbaseunits,id',
             'conversion_rate' => 'required|numeric'
         ]);
-        
+    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
-
-        $productbaseunit = Productbaseunit::findOrFail($request->product_base_unit_id);
-        $productbaseunit->updateOrCreate([
-            'product_base_unit' => $request->product_base_unit,
-        ]);
-        return response()->json(['message' => 'Product base unit created successfully'], 200);
+    
+        $unitconversions = new Productunitconversion();
+        $unitconversions->product_base_unit_id = $request->base_unit_id;
+        $unitconversions->product_secondary_unit_id = $request->secondary_unit_id;
+        $unitconversions->conversion_rate = $request->conversion_rate;
+        $unitconversions->save();
+    
+        return response()->json(['message' => 'Product unit conversion created successfully'], 200);
     }
+
+    
 }
 
 
