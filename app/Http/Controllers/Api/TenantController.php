@@ -91,8 +91,9 @@ class TenantController extends Controller
 
 
     public function updateMainBranchDetails(Request $request){
+      
         $validator = Validator::make($request->all(), [
-            'tenant_id' => 'required|numeric',
+            'tenant_id' => 'required|numeric|exists:tenants,id',
             'business_name' => 'required|string',
             'business_types_id' => 'nullable|numeric|exists:business_types,id',
             'business_address' => 'nullable|string',
@@ -114,6 +115,7 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
+
         $user = auth()->user(); 
         if (!$user) {
             return response()->json([
@@ -135,6 +137,7 @@ class TenantController extends Controller
             'pin_code' => $request->pin_code,
             'city_id' => $request->city_id
         ]);
+
 
         if (!$tenant) {
             return response()->json([
@@ -196,6 +199,7 @@ class TenantController extends Controller
             'state_id' => 'nullable|numeric|exists:states,id',
             'business_email' => 'nullable|email|unique:tenants,business_email',
             'pin_code' => 'nullable|numeric|digits:6',
+            'city_id' => 'nullable|numeric',
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
             'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',   
         ]);
@@ -228,7 +232,7 @@ class TenantController extends Controller
         $tenant->state_id = $request->state_id;
         $tenant->business_email = $request->business_email;
         $tenant->pin_code = $request->pin_code;
-
+        $tenant->city_id = $request->city_id;
 
         $tenant->business_logo = null;
         $tenant->business_signature = null;
