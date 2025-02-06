@@ -9,6 +9,7 @@ class Productbaseunit extends Model
     use HasFactory;
     protected $fillable = [
         'product_base_unit',
-        'is_delete'
+        'is_delete',
+        'shortname'
     ];
 }

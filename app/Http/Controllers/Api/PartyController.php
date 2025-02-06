@@ -169,7 +169,6 @@ class PartyController extends Controller
 
     public function updatePartyDetails(Request $request)
     {
-        // Validate the incoming request
         $validator = Validator::make($request->all(), [
             'party_id' => 'required|numeric',
             'party_name' => 'nullable|string',
@@ -248,8 +247,6 @@ class PartyController extends Controller
                 }
             }
         }
-
-        // Handle additional fields
         if ($request->filled('addational_fields')) {
             foreach ($request->addational_fields as $additionalField) {
                 if (!empty($additionalField['addational_field_id'])) {
@@ -316,6 +313,13 @@ public function scheduleReminder(Request $request) {
         'data' => $setreminder
     ]);
 }
+
+
+
+
+
+
+
 
 
 public function getPartyReminder(Request $request) {
