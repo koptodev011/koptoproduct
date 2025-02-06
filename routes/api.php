@@ -26,6 +26,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getallstaff', [AuthController::class, 'getAllStaff']); 
 });
 
+//Roles
+Route::get('/getroles', [AuthController::class, 'staffRoles']);
+
+
 Route::post('/updatestaffdetails', [AuthController::class, 'updateStaffDetails']);
 Route::delete('/deletestaff/{staff_id}', [AuthController::class, 'deleteStaff']);
 Route::get('/getcitiesofstate', [TenantController::class, 'getCitiesOfState']);

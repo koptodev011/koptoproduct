@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\Product;
+use App\Models\Cart;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,20 +52,48 @@ class GrowYourBusiness extends Controller
 
 
 
-public function addToCart(Request $request){
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'method' => 'nullable',
-            'key' => 'required'
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 400);
-        }
-        
+public function addToCart(Request $request) {
+    $validator = Validator::make($request->all(), [
+        'product_id' => 'required|exists:products,id',
+        'method' => 'nullable',
+        'key' => 'required',
+        'tenant_id' => 'required'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
     }
+
+    // Check if the item already exists in the cart
+    $cartitem = Cart::where('unique_key', $request->key)
+                    ->where('product_id', $request->product_id)
+                    ->where('tenant_id', $request->tenant_id)
+                    ->first();
+
+    if (!$cartitem) {
+        $cartitem = new Cart();
+        $cartitem->product_id = $request->product_id;
+        $cartitem->unique_key = $request->key;
+        $cartitem->tenant_id = $request->tenant_id;
+        $cartitem->quantity = 1;
+        $cartitem->save();
+    } else {
+        if ($request->method == 'add') {
+            $cartitem->update(['quantity' => $cartitem->quantity + 1]);
+        } elseif ($request->method == 'substrate') {
+            $cartitem->update(['quantity' => $cartitem->quantity - 1]);
+            if ($cartitem->quantity <= 0) {
+                $cartitem->delete();
+            }
+        }
+    }
+
+    return response()->json(['message' => 'Cart updated successfully']);
+}
+
+
 
 }
