@@ -363,16 +363,7 @@ public function deleteProduct($product_id){
 
 
 
-    // public function assignCode(){
-    //     $randomNumber = mt_rand(10000000000, 99999999999);
-    //     $searchforuniquecode = Product::where('item_code',$randomNumber)->first();
-    //     if($searchforuniquecode){
-    //         dd("number was found");
-    //     }else{
-    //         dd("number was not found");
-    //     }
-    //     return response()->json(['code' => $randomNumber], 200);
-    // }
+
 
     public function assignCode()
 {
@@ -691,6 +682,8 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Base units deleted successfully'], 200);
     }
 
+  
+  
     public function addConversionunits(Request $request)
     { 
         $validator = Validator::make($request->all(), [
