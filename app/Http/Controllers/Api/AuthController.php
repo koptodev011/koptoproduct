@@ -56,6 +56,10 @@ class AuthController extends Controller
     ], 200);
 }
 
+
+
+
+
     
 
 
@@ -100,6 +104,11 @@ class AuthController extends Controller
     }
     
 
+
+
+
+
+
 public function profile(){
     $user = auth()->user();
     return response()->json([
@@ -109,11 +118,22 @@ public function profile(){
 }
 
 
+
+
+
+
+
 public function staffRoles()
 {
     $staffRoles = Role::whereNotIn('id', [1, 2])->get();
     return $staffRoles;
 }
+
+
+
+
+
+
 
 public function addStaff(Request $request)
 {
@@ -124,7 +144,7 @@ public function addStaff(Request $request)
         'email' => 'required|email|unique:users,email',
         'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number',
         'role_id' => 'required|numeric|exists:roles,id',
-        'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg', // 2MB limit
+        'profile_photo' => 'nullable|image|', // 2MB limit
     ]);
 
     if ($validator->fails()) {
@@ -156,6 +176,10 @@ public function addStaff(Request $request)
 
 
 
+
+
+
+
  public function getAllStaff()
  {
      $user = auth()->user();
@@ -175,61 +199,10 @@ public function addStaff(Request $request)
  
  
 
-//  public function updateStaffDetails(Request $request)
-//  {
-//      $staff = User::find($request->staff_id);
- 
-//      if (!$staff) {
-//          return response()->json([
-//              'message' => 'Staff member not found'
-//          ], 404);
-//      }
- 
-//      $validator = Validator::make($request->all(), [
-//          'staff_id' => 'required|numeric|exists:users,id',
-//          'name' => 'required|string',
-//          'email' => 'required|email|unique:users,email,' . $staff->id,
-//          'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number,' . $staff->id,
-//          'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
-//          'role_id' => 'required|numeric|exists:roles,id'
-//      ]);
- 
-//      if ($validator->fails()) {
-//          return response()->json([
-//              'message' => 'Validation failed',
-//              'errors' => $validator->errors()
-//          ], 400);
-//      }
- 
-//      // Handle profile photo update
-//      if ($request->hasFile('profile_photo')) {
-//          // Delete old profile photo if it exists
-//          if ($staff->profile_photo) {
-//              $oldPhotoPath = public_path('storage/' . $staff->profile_photo);
-//              if (file_exists($oldPhotoPath)) {
-//                  unlink($oldPhotoPath);
-//              }
-//          }
- 
-//          // Upload new profile photo
-//          $file = $request->file('profile_photo');
-//          $filename = time() . '_' . $file->getClientOriginalName();
-//          $path = $file->storeAs('profile_photo', $filename, 'public');
- 
-//          // Save new file path
-//          $staff->profile_photo = 'storage/' . $path;
-//      }
- 
-//      // Update other staff details
-//      $staff->update([
-//          'name' => $request->name,
-//          'email' => $request->email,
-//          'mobile_number' => $request->mobile_number,
-//          'role_id' => $request->role_id
-//      ]);
- 
-//      return response()->json(['message' => 'Staff member updated successfully'], 200);
-//  }
+
+
+
+
  
 public function updateStaffDetails(Request $request)
 {
@@ -256,10 +229,7 @@ public function updateStaffDetails(Request $request)
             'errors' => $validator->errors()
         ], 400);
     }
-
-    // Check if new profile photo is uploaded
     if ($request->hasFile('profile_photo')) {
-        // Ensure old image deletion
         if ($staff->profile_photo) {
             $oldPhotoPath = storage_path('app/public/' . $staff->profile_photo);
             
@@ -273,8 +243,6 @@ public function updateStaffDetails(Request $request)
                 \Log::warning('Old image not found: ' . $oldPhotoPath);
             }
         }
-
-        // Upload new profile photo
         $file = $request->file('profile_photo');
         $filename = time() . '_' . $file->getClientOriginalName();
         $path = $file->storeAs('profile_photo', $filename, 'public');
@@ -291,6 +259,10 @@ public function updateStaffDetails(Request $request)
 
     return response()->json(['message' => 'Staff member updated successfully'], 200);
 }
+
+
+
+
 
 
 
