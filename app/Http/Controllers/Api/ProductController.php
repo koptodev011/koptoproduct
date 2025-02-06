@@ -31,8 +31,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'product_name' => 'nullable|string',
             'product_hsn' => 'required',
-            'base_unit_id' => 'required',
-            'secondary_unit_id' => 'nullable',
+            'base_unit_id' => 'required|exists:productbaseunits,id',
+            'secondary_unit_id' => 'nullable|exists:productbaseunits,id',
             'conversion_rate' => 'nullable',
             'description' => 'nullable|string',    
             'mrp' => 'nullable|numeric',
