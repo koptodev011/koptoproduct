@@ -616,13 +616,15 @@ public function bulkDeleteCategories(Request $request)
 
     public function addBaseUnit(Request $request){
         $validator = Validator::make($request->all(), [
-            'product_base_unit' => 'required'
+            'product_base_unit' => 'required',
+            'short_name' => 'required'
         ]);
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
         $productbaseunit = new Productbaseunit();
         $productbaseunit->product_base_unit = $request->product_base_unit;
+        $productbaseunit->shortname = $request->short_name;
         $productbaseunit->save();
         return response()->json(['message' => 'Product base unit created successfully'], 200);
     }
@@ -633,14 +635,20 @@ public function bulkDeleteCategories(Request $request)
     public function updateBaseUnit(Request $request){
         $validator = Validator::make($request->all(), [
             'product_base_unit_id' => 'required|numeric',
-            'product_base_unit' => 'required'
+            'product_base_unit' => 'required',
+            'short_name' => 'required'
         ]);
+      
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
         $productbaseunit = Productbaseunit::findOrFail($request->product_base_unit_id);
+        if(!$productbaseunit){
+            return response()->json(['message' => 'Product base unit not found'], 404);
+        }
         $productbaseunit->update([
             'product_base_unit' => $request->product_base_unit,
+            'shortname' => $request->short_name
         ]);
         return response()->json(['message' => 'Product base unit updated successfully'], 200);
     }
