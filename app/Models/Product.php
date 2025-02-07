@@ -62,4 +62,9 @@ class Product extends Model
     {
         return $this->hasOne(Productunitconversion::class, 'id', 'productconversion_id');
     }
+
+    public function purchasePrice()
+    {
+        return $this->hasOne(ProductPurchesPrice::class);
+    }
 }
