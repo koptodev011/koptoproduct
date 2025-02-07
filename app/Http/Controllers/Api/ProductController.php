@@ -21,7 +21,7 @@ use App\Models\Productstockadjectment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-
+use Carbon\Carbon;
 class ProductController extends Controller
 {
    
@@ -393,39 +393,6 @@ public function deleteProduct($product_id){
 
 
 
-
-
-    // public function getProductDetails(Request $request)
-    // {
-    //     $user = Auth::user();
-    //     $product = Product::where('id', $request->product_id)
-    //         ->where('user_id', $user->id)
-    //         ->with([
-    //             'productUnitConversion',
-    //             'pricing',
-    //             'wholesalePrice',
-    //             'stock',
-    //             'onlineStore',
-    //             'images'
-    //         ])
-    //         ->first();
-    
-    //     if (!$product) {
-    //         return response()->json(['message' => 'Product not found'], 404);
-    //     }
-    
-    //     $salePrice = $product->pricing->sale_price ?? 0;
-    //     $stockQuantity = $product->stock->product_stock ?? 0;
-    //     $stockValue = $salePrice * $stockQuantity;
-    
-    //     $product->stock_value = $stockValue;
-    
-    //     return response()->json([
-    //         'product' => $product
-    //     ], 200);
-    // }
-    
-
     public function getProductDetails(Request $request)
 {
     $user = Auth::user();
@@ -486,46 +453,86 @@ public function deleteProduct($product_id){
 
 
 
+    // public function adjectProduct(Request $request){
+    //     $validator = Validator::make($request->all(), [
+    //         'addorreduct_product_stock' => 'required',
+    //         'product_id' => 'required|exists:products,id',
+    //         'stock'=> 'required',
+    //         'priceperunit'=> 'required',
+    //         'details'=> 'required',
+    //         'date'=> 'required'
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return response()->json($validator->errors(), 400);
+    //     }
+
+    //     $productstockadjectment = new Productstockadjectment();
+    //     $productstockadjectment->addorreduct_product_stock = $request->addorreduct_product_stock;
+    //     $productstockadjectment->product_id = $request->product_id;
+    //     $productstockadjectment->stock_quantity = $request->stock;
+    //     $productstockadjectment->priceperunit = $request->priceperunit;
+    //     $productstockadjectment->details = $request->details;
+    //     $stock->productadjectmentdate = $request->date;
+    //     $productstockadjectment->save();
+
+    //     $stock = Productstock::where('product_id', $request->product_id)->first();
+    //     if($request->addorreduct_product_stock==1){
+    //         $stock->product_stock = $stock->product_stock + $request->stock;
+    //     }
+    //     else{
+    //         $stock->product_stock = $stock->product_stock - $request->stock;
+    //         if($stock->product_stock < 0){
+    //             $stock->product_stock = 0;
+    //         }
+    //     }
+    //     $stock->at_price = $request->priceperunit;
+        
+    //     $stock->save();
+
+    //     return response()->json(['message' => 'Product stock adjected successfully'], 200); 
+    // }
+
+
+
     public function adjectProduct(Request $request){
         $validator = Validator::make($request->all(), [
             'addorreduct_product_stock' => 'required',
             'product_id' => 'required|exists:products,id',
             'stock'=> 'required',
             'priceperunit'=> 'required',
-            'details'=> 'required'
+            'details'=> 'required',
+            'date'=> 'required' // Expecting '7/02/2025'
         ]);
-
-        
+    
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-
+    
         $productstockadjectment = new Productstockadjectment();
         $productstockadjectment->addorreduct_product_stock = $request->addorreduct_product_stock;
         $productstockadjectment->product_id = $request->product_id;
         $productstockadjectment->stock_quantity = $request->stock;
         $productstockadjectment->priceperunit = $request->priceperunit;
         $productstockadjectment->details = $request->details;
+        $productstockadjectment->productadjectmentdate = Carbon::createFromFormat('d/m/Y', $request->date)->format('Y-m-d'); // Convert format
         $productstockadjectment->save();
-
+    
         $stock = Productstock::where('product_id', $request->product_id)->first();
-        if($request->addorreduct_product_stock==1){
+    
+        if ($request->addorreduct_product_stock == 1) {
             $stock->product_stock = $stock->product_stock + $request->stock;
-        }
-        else{
+        } else {
             $stock->product_stock = $stock->product_stock - $request->stock;
-            if($stock->product_stock < 0){
+            if ($stock->product_stock < 0) {
                 $stock->product_stock = 0;
             }
         }
+    
         $stock->at_price = $request->priceperunit;
         $stock->save();
-
-        return response()->json(['message' => 'Product stock adjected successfully'], 200); 
+    
+        return response()->json(['message' => 'Product stock adjusted successfully'], 200); 
     }
-
-
-
 
 
 
