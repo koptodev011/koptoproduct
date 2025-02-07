@@ -151,13 +151,15 @@ class ProductController extends Controller
         $product->save();
 
         if ($request->has('product_images')) {
-        foreach ($request->file('product_images') as $image) {
-        $path = $image->store('product_images', 'public');
-        $productImage = new ProductImages();
-        $productImage->product_id = $product->id;
-        $productImage->product_image = $path;
-        $productImage->save();
-    }  
+            foreach ($request->file('product_images') as $image) {
+                $path = $image->store('product_images', 'public');
+                $productImage = new ProductImages();
+                $productImage->product_id = $product->id;
+                $productImage->product_image = 'storage/' . $path; // Add 'storage/' before saving
+                $productImage->save();
+            }  
+        // }
+        
     }
     return response()->json(['message' => 'Product created successfully'], 200);
 }
@@ -257,16 +259,29 @@ public function editProdutDetails(Request $request) {
         'tax_id' => $request->tax_id
     ]);
 
+    // DB::table('productimages')->where('product_id', $product->id)->delete();
+    // if ($request->hasFile('product_images')) {
+    //     foreach ($request->file('product_images') as $image) {
+    //         $imagePath = $image->store('product_images', 'public');
+    //         DB::table('productimages')->insert([
+    //             'product_id' => $product->id,
+    //             'product_image' => $imagePath
+    //         ]);
+    //     }
+    // }
+
     DB::table('productimages')->where('product_id', $product->id)->delete();
-    if ($request->hasFile('product_images')) {
-        foreach ($request->file('product_images') as $image) {
-            $imagePath = $image->store('product_images', 'public');
-            DB::table('productimages')->insert([
-                'product_id' => $product->id,
-                'product_image' => $imagePath
-            ]);
-        }
+
+if ($request->hasFile('product_images')) {
+    foreach ($request->file('product_images') as $image) {
+        $imagePath = $image->store('product_images', 'public');
+        DB::table('productimages')->insert([
+            'product_id' => $product->id,
+            'product_image' => 'storage/' . $imagePath // Add 'storage/' before saving
+        ]);
     }
+}
+
 
     $unitconversion = $product->productUnitConversion;
     $unitconversion->update([
