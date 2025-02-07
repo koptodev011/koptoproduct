@@ -12,4 +12,9 @@ class Productcategory extends Model
         'product_category',
         'is_delete'
     ];
+
+    public function products()
+{
+    return $this->hasMany(Product::class, 'product_category_id');
+}
 }
