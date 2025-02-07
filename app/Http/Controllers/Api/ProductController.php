@@ -177,6 +177,7 @@ public function getProducts(Request $request)
             'stock',        
             'onlineStore',
             'productUnitConversion',
+            'purchasePrice',
             'images'
         ])
         ->get();
@@ -394,36 +395,69 @@ public function deleteProduct($product_id){
 
 
 
+    // public function getProductDetails(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $product = Product::where('id', $request->product_id)
+    //         ->where('user_id', $user->id)
+    //         ->with([
+    //             'productUnitConversion',
+    //             'pricing',
+    //             'wholesalePrice',
+    //             'stock',
+    //             'onlineStore',
+    //             'images'
+    //         ])
+    //         ->first();
+    
+    //     if (!$product) {
+    //         return response()->json(['message' => 'Product not found'], 404);
+    //     }
+    
+    //     $salePrice = $product->pricing->sale_price ?? 0;
+    //     $stockQuantity = $product->stock->product_stock ?? 0;
+    //     $stockValue = $salePrice * $stockQuantity;
+    
+    //     $product->stock_value = $stockValue;
+    
+    //     return response()->json([
+    //         'product' => $product
+    //     ], 200);
+    // }
+    
+
     public function getProductDetails(Request $request)
-    {
-        $user = Auth::user();
-        $product = Product::where('id', $request->product_id)
-            ->where('user_id', $user->id)
-            ->with([
-                'productUnitConversion',
-                'pricing',
-                'wholesalePrice',
-                'stock',
-                'onlineStore',
-                'images'
-            ])
-            ->first();
-    
-        if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-    
-        $salePrice = $product->pricing->sale_price ?? 0;
-        $stockQuantity = $product->stock->product_stock ?? 0;
-        $stockValue = $salePrice * $stockQuantity;
-    
-        $product->stock_value = $stockValue;
-    
-        return response()->json([
-            'product' => $product
-        ], 200);
+{
+    $user = Auth::user();
+    $product = Product::where('id', $request->product_id)
+        ->where('user_id', $user->id)
+        ->with([
+            'productUnitConversion',
+            'pricing',
+            'wholesalePrice',
+            'stock',
+            'onlineStore',
+            'images',
+            'purchasePrice' // Add the purchasePrice relationship here
+        ])
+        ->first();
+
+    if (!$product) {
+        return response()->json(['message' => 'Product not found'], 404);
     }
-    
+
+    $salePrice = $product->pricing->sale_price ?? 0;
+    $stockQuantity = $product->stock->product_stock ?? 0;
+    $stockValue = $salePrice * $stockQuantity;
+    $purchasePrice = $product->purchasePrice->product_purches_price ?? 0; // Fetch purchase price
+
+    $product->stock_value = $stockValue;
+    $product->purchase_price = $purchasePrice; // Add purchase price to response
+
+    return response()->json([
+        'product' => $product
+    ], 200);
+}
 
 
 
