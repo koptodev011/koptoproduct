@@ -603,19 +603,36 @@ public function deleteProduct($product_id){
 
 
 
+    // public function getProductCategory()
+    // {
+    //     $user = Auth::user();
+        
+    //     $productcategories = Productcategory::where('is_delete', false)
+    //         ->where(function ($query) use ($user) {
+    //             $query->where('user_id', $user->id)
+    //                   ->orWhere('id', 1);
+    //         })
+    //         ->get();
+        
+        
+    //     return response()->json($productcategories, 200);
+    // }
+
     public function getProductCategory()
-    {
-        $user = Auth::user();
-        
-        $productcategories = Productcategory::where('is_delete', false)
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->orWhere('id', 1);
-            })
-            ->get();
-        
-        return response()->json($productcategories, 200);
-    }
+{
+    $user = Auth::user();
+
+    $productcategories = Productcategory::where('is_delete', false)
+        ->where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->orWhere('id', 1);
+        })
+        ->withCount('products') // Count products for each category
+        ->get();
+
+    return response()->json($productcategories, 200);
+}
+
     
 
     
