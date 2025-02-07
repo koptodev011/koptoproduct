@@ -112,6 +112,9 @@ class GrowYourBusiness extends Controller
 //     return response()->json(['message' => 'Cart updated successfully']);
 // }
 
+
+
+
 public function addToCart(Request $request) {
     $validator = Validator::make($request->all(), [
         'product_id' => 'required|exists:products,id',
@@ -126,15 +129,10 @@ public function addToCart(Request $request) {
             'errors' => $validator->errors()
         ], 400);
     }
-
-    // Check if the item already exists in the cart
     $cartitem = Cart::where('unique_key', $request->key)
                     ->where('product_id', $request->product_id)
                     ->where('tenant_id', $request->tenant_id)
                     ->first();
-    // if(!$cartitem){
-    //     return response()->json(['message' => 'Cart not found'], 404);
-    // }
                     
     $searchproducts = Product::where('id', $request->product_id)
                     ->where('isonlineproduct', 1)
@@ -146,14 +144,11 @@ public function addToCart(Request $request) {
                         'productUnitConversion',
                         'images'
                     ])->first();
-    
-    
-
     if (!$searchproducts) {
         return response()->json(['message' => 'Product not found'], 404);
     }
 
-    if (!$cartitem) {
+    if(!cartitem){
         $cartitem = new Cart();
         $cartitem->product_id = $request->product_id;
         $cartitem->unique_key = $request->key;
@@ -161,27 +156,46 @@ public function addToCart(Request $request) {
         $cartitem->quantity = 1;
         $cartitem->product_amount = $searchproducts->pricing->mrp ?? $searchproducts->pricing->selling_price;
         $cartitem->save();
-    } else {
-        if ($request->method == 'add') {
-            $priceToAdd = $searchproducts->mrp ?? $searchproducts->pricing->sale_price;
-            $cartitem->update([
-                'quantity' => $cartitem->quantity + 1,
-                'product_amount' => $cartitem->product_amount + $priceToAdd,
-            ]);
-
-        } elseif ($request->method == 'substrate') {
-            $cartitem->update(['quantity' => $cartitem->quantity - 1]);
-            if ($cartitem->quantity <= 1) {
-                $cartitem->delete();
-                return response()->json(['message' => 'Cart is Empty', 'cart' => $cartitem], 200);
-            }
+    }elseif($request->method == 'add'){
+        $priceToAdd = $searchproducts->mrp ?? $searchproducts->pricing->sale_price;
+        $cartitem->update([
+            'quantity' => $cartitem->quantity + 1,
+            'product_amount' => $cartitem->product_amount + $priceToAdd,
+        ]);
+    }elseif($request->method == 'substrate'){
+        $cartitem->update(['quantity' => $cartitem->quantity - 1]);
+        if($cartitem->quantity <= 0){
+            $cartitem->delete();
+            return response()->json(['message' => 'Cart is Empty', 'cart' => $cartitem], 200);
         }
     }
 
+    // if (!$cartitem) {
+    //     $cartitem = new Cart();
+    //     $cartitem->product_id = $request->product_id;
+    //     $cartitem->unique_key = $request->key;
+    //     $cartitem->tenant_id = $request->tenant_id;
+    //     $cartitem->quantity = 1;
+    //     $cartitem->product_amount = $searchproducts->pricing->mrp ?? $searchproducts->pricing->selling_price;
+    //     $cartitem->save();
+    // } else {
+    //     if ($request->method == 'add') {
+    //         $priceToAdd = $searchproducts->mrp ?? $searchproducts->pricing->sale_price;
+    //         $cartitem->update([
+    //             'quantity' => $cartitem->quantity + 1,
+    //             'product_amount' => $cartitem->product_amount + $priceToAdd,
+    //         ]);
+
+    //     } elseif ($request->method == 'substrate') {
+    //         $cartitem->update(['quantity' => $cartitem->quantity - 1]);
+    //         if ($cartitem->quantity = 0) {
+    //             $cartitem->delete();
+    //             return response()->json(['message' => 'Cart is Empty', 'cart' => $cartitem], 200);
+    //         }
+    //     }
+    // }
     return response()->json(['message' => 'Cart updated successfully', 'cart' => $cartitem], 200);
 }
-
-
 
 
 
