@@ -585,6 +585,7 @@ public function deleteProduct($product_id){
 
     // Caterories section
     public function addProductCategory(Request $request){
+        $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'product_category' => 'required'
         ]);
@@ -593,6 +594,7 @@ public function deleteProduct($product_id){
         }
         $productcategory = new Productcategory();
         $productcategory->product_category = $request->product_category;
+        $productcategory->user_id = $user->id;
         $productcategory->save();
         return response()->json(['message' => 'Product category created successfully'], 200);
     }
@@ -601,10 +603,20 @@ public function deleteProduct($product_id){
 
 
 
-    public function getProductCategory(){
-        $productcategories = Productcategory::where('is_delete', false)->get();
+    public function getProductCategory()
+    {
+        $user = Auth::user();
+        
+        $productcategories = Productcategory::where('is_delete', false)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('id', 1);
+            })
+            ->get();
+        
         return response()->json($productcategories, 200);
     }
+    
 
     
 

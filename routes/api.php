@@ -82,8 +82,10 @@ Route::post('/addtaxrate', [ProductController::class, 'addTaxRate']);
 Route::get('/gettaxrate', [ProductController::class, 'getTaxRate']);
 
        // Caterories section
+Route::middleware('auth:sanctum')->group(function () {
 Route::post('/addproductcategory', [ProductController::class, 'addProductCategory']);
 Route::get('/getproductcategory', [ProductController::class, 'getProductCategory']);
+});
 Route::post('/updatecategory', [ProductController::class, 'updateCategory']);
 Route::delete('/deleteproductcategory/{product_category_id}', [ProductController::class, 'deleteProductCategory']);
 Route::post('/bulkdeletecategories', [ProductController::class, 'bulkDeleteCategories']);
@@ -102,7 +104,6 @@ Route::post('/addunitconversion', [ProductController::class, 'addConversionunits
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsaleinvoice', [SalesController::class, 'addSaleInvoice']);
 });
-
 Route::post('/addsalespaymenttype', [SalesController::class, 'addSalesPaymentType']);
 Route::get('/getsalesdata',[SalesController::class,'getSalesData']);
 Route::get('/getsalespaymenttype', [SalesController::class, 'getSalesPaymentType']);
@@ -145,4 +146,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getonlineproducts', [GrowYourBusiness::class, 'getOnlineProducts']); 
 });
 Route::post('/addtocart',[GrowYourBusiness::class,'addToCart']);
-
+Route::get('/getcartsummary',[GrowYourBusiness::class,'getCartSummary']);
+Route::post('/placeorder',[GrowYourBusiness::class,'placeOrder']);

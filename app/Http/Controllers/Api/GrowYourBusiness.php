@@ -117,4 +117,45 @@ public function addToCart(Request $request) {
 
 
 
+
+
+
+
+
+public function getCartSummary(Request $request) {
+    $validator = Validator::make($request->all(), [
+        'key' => 'required',
+        'tenant_id' => 'required'
+    ]);
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $cartitems = Cart::where('unique_key', $request->key)
+                    ->where('tenant_id', $request->tenant_id)
+                    ->with('product')
+                    ->get();
+   
+
+    if ($cartitems->isEmpty()) {
+        return response()->json(['message' => 'Cart is Empty'], 200);
+    }
+
+    $totalAmount = $cartitems->sum('product_amount');
+    $totalQuantity = $cartitems->sum('quantity');
+
+    return response()->json(['cart' => $cartitems, 'total_amount' => $totalAmount, 'total_quantity' => $totalQuantity], 200);
+}
+
+
+public function placeOrder(Request $request){
+    dd("changes");
+}
+
+
+
+
 }
