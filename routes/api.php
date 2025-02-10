@@ -85,6 +85,7 @@ Route::get('/gettaxrate', [ProductController::class, 'getTaxRate']);
 Route::middleware('auth:sanctum')->group(function () {
 Route::post('/addproductcategory', [ProductController::class, 'addProductCategory']);
 Route::get('/getproductcategory', [ProductController::class, 'getProductCategory']);
+Route::get('/getperticularproductcategory',[ProductController::class,'getPerticularProductCategory']);
 });
 Route::post('/updatecategory', [ProductController::class, 'updateCategory']);
 Route::delete('/deleteproductcategory/{product_category_id}', [ProductController::class, 'deleteProductCategory']);

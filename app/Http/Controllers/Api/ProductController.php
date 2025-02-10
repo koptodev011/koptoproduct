@@ -453,46 +453,6 @@ public function deleteProduct($product_id){
 
 
 
-    // public function adjectProduct(Request $request){
-    //     $validator = Validator::make($request->all(), [
-    //         'addorreduct_product_stock' => 'required',
-    //         'product_id' => 'required|exists:products,id',
-    //         'stock'=> 'required',
-    //         'priceperunit'=> 'required',
-    //         'details'=> 'required',
-    //         'date'=> 'required'
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 400);
-    //     }
-
-    //     $productstockadjectment = new Productstockadjectment();
-    //     $productstockadjectment->addorreduct_product_stock = $request->addorreduct_product_stock;
-    //     $productstockadjectment->product_id = $request->product_id;
-    //     $productstockadjectment->stock_quantity = $request->stock;
-    //     $productstockadjectment->priceperunit = $request->priceperunit;
-    //     $productstockadjectment->details = $request->details;
-    //     $stock->productadjectmentdate = $request->date;
-    //     $productstockadjectment->save();
-
-    //     $stock = Productstock::where('product_id', $request->product_id)->first();
-    //     if($request->addorreduct_product_stock==1){
-    //         $stock->product_stock = $stock->product_stock + $request->stock;
-    //     }
-    //     else{
-    //         $stock->product_stock = $stock->product_stock - $request->stock;
-    //         if($stock->product_stock < 0){
-    //             $stock->product_stock = 0;
-    //         }
-    //     }
-    //     $stock->at_price = $request->priceperunit;
-        
-    //     $stock->save();
-
-    //     return response()->json(['message' => 'Product stock adjected successfully'], 200); 
-    // }
-
-
 
     public function adjectProduct(Request $request){
         $validator = Validator::make($request->all(), [
@@ -534,6 +494,7 @@ public function deleteProduct($product_id){
         return response()->json(['message' => 'Product stock adjusted successfully'], 200); 
     }
 
+    
 
 
 
@@ -610,20 +571,7 @@ public function deleteProduct($product_id){
 
 
 
-    // public function getProductCategory()
-    // {
-    //     $user = Auth::user();
-        
-    //     $productcategories = Productcategory::where('is_delete', false)
-    //         ->where(function ($query) use ($user) {
-    //             $query->where('user_id', $user->id)
-    //                   ->orWhere('id', 1);
-    //         })
-    //         ->get();
-        
-        
-    //     return response()->json($productcategories, 200);
-    // }
+ 
 
     public function getProductCategory()
 {
@@ -641,6 +589,24 @@ public function deleteProduct($product_id){
 }
 
     
+public function getPerticularProductCategory(Request $request){
+    $validator = Validator::make($request->all(), [
+        'product_category_id' => 'required|numeric'
+    ]);
+    $user = Auth::user();
+
+    $productcategories = Productcategory::where('is_delete', false)
+        ->where(function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })
+        ->with('products')
+        ->first();
+
+    return response()->json($productcategories, 200);
+}
+
+
+
 
     
 
