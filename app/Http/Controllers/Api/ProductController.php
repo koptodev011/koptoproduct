@@ -589,21 +589,61 @@ public function deleteProduct($product_id){
 }
 
     
-public function getPerticularProductCategory(Request $request){
+// public function getPerticularProductCategory(Request $request){
+//     $validator = Validator::make($request->all(), [
+//         'product_category_id' => 'required|numeric'
+//     ]);
+//     $user = Auth::user();
+
+
+
+//     $productcategories = Productcategory::where('is_delete', false)
+//     ->where('id', $request->product_category_id)
+//     ->where('user_id', $user->id)
+//     ->with(['products.stock'])
+//     ->with(['products.pricing']) 
+//     ->first();
+
+//     return response()->json($productcategories, 200);
+// }
+
+
+public function getPerticularProductCategory(Request $request)
+{
     $validator = Validator::make($request->all(), [
         'product_category_id' => 'required|numeric'
     ]);
+
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+
     $user = Auth::user();
 
     $productcategories = Productcategory::where('is_delete', false)
-        ->where(function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
-        ->with('products')
+        ->where('id', $request->product_category_id)
+        ->where('user_id', $user->id)
+        ->with(['products.stock', 'products.pricing'])
         ->first();
+
+    if (!$productcategories) {
+        return response()->json(['message' => 'No product category found'], 404);
+    }
+
+    // Count number of products in the category
+    $productcategories->product_count = $productcategories->products->count();
+
+    // Calculate stock value for each product
+    foreach ($productcategories->products as $product) {
+        $salePrice = optional($product->pricing)->sale_price ?? 0;
+        $productStock = optional($product->stock)->product_stock ?? 0;
+        $product->stock_value = $salePrice * $productStock;
+    }
 
     return response()->json($productcategories, 200);
 }
+
+
 
 
 
@@ -710,6 +750,8 @@ public function bulkDeleteCategories(Request $request)
         return response()->json($productbaseunits, 200);
     }
 
+  
+  
     public function deleteBaseUnit($base_unit_id){
         $productbaseunit = Productbaseunit::where('id', $base_unit_id)->first();
         if (!$productbaseunit) {

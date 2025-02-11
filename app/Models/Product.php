@@ -38,6 +38,8 @@ class Product extends Model
         return $this->hasOne(Productstock::class, 'product_id');
     }
 
+   
+
     public function onlineStore()
     {
         return $this->hasOne(Productonlinestore::class, 'product_id');
@@ -67,4 +69,6 @@ class Product extends Model
     {
         return $this->hasOne(ProductPurchesPrice::class);
     }
+
+
 }
