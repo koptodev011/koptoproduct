@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Staff;
+use App\Models\Productcategory;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Tenant;
 
@@ -92,7 +93,12 @@ class AuthController extends Controller
         $tenant->save();
 
         $user->tenant_id = $tenant->id;
-        $user->save(); 
+        $user->save();
+
+        $productcategory = new Productcategory();
+        $productcategory->product_category = 'General';
+        $productcategory->user_id = $user->id;
+        $productcategory->save();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
