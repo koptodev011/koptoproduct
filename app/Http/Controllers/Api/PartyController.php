@@ -51,7 +51,13 @@ class PartyController extends Controller
     }
 
     public function getPartyGroup(){
-        $partygroup = Partygroup::all();
+        $user= auth()->user();
+        $partygroup = Partygroup::where('user_id', $user->id)->get();
+        if ($partygroup->isEmpty()) {
+            return response()->json([
+                'message' => 'Party group not found'
+            ], 404);
+        }
         return response()->json($partygroup, 200);
     }
 
@@ -65,18 +71,18 @@ class PartyController extends Controller
     public function addParty(Request $request) {
         $validator = Validator::make($request->all(), [
             'party_name' => 'required|string',
-            'tin_number' => 'required|string',
-            'phone_number' => 'required|numeric|digits:10',
-            'email' => 'required|email|unique:users,email',
+            'tin_number' => 'nullable|string',
+            'phone_number' => 'nullable|numeric|digits:10',
+            'email' => 'nullable|email|unique:users,email',
             'billing_address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
             'topayortorecive' => 'nullable|boolean',
             'creditlimit' => 'nullable|numeric',
-            'shipping_addresses' => 'required|array',
-            'shipping_addresses.*.shipping_addresses' => 'required|string',
-            'addational_fields' => 'required|array',
-            'addational_fields.*.addational_field_name' => 'required|string',
-            'addatioal_fields.*.addational_field_data' => 'required|string',
+            'shipping_addresses' => 'nullable|array',
+            'shipping_addresses.*.shipping_addresses' => 'nullable|string',
+            'addational_fields' => 'nullable|array',
+            'addational_fields.*.addational_field_name' => 'nullable|string',
+            'addatioal_fields.*.addational_field_data' => 'nullable|string',
             'group_id' => 'nullable|numeric',
         ]);
 
@@ -86,7 +92,7 @@ class PartyController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-    
+
         $user = auth()->user(); 
         $tenant = Tenant::where('user_id', $user->id)
             ->where('isactive', 1)
@@ -97,7 +103,7 @@ class PartyController extends Controller
                 'message' => 'Tenant not found or inactive'
             ], 404);
         }
-    
+        
         $party = new Party();
         $party->party_name = $request->party_name;
         $party->TIN_number = $request->tin_number;
@@ -111,7 +117,6 @@ class PartyController extends Controller
         $party->tenant_id = $tenant->id;
         $party->group_id = $request->group_id;
         $party->save();
-    
         
         foreach ($request->shipping_addresses as $shipping_address) {
             ShippingAddress::create([

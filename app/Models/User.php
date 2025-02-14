@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Authenticatable
 {
     use HasApiTokens, Notifiable;
@@ -28,10 +29,20 @@ class User extends Authenticatable
         return $this->hasMany(Tenant::class);
     }
 
+    public function tenantunit()
+    {
+        return $this->hasMany(TenantUnit::class);
+    }
+
     public function staffs()
     {
         return $this->hasMany(Staff::class, 'user_id');
     }
+
+    public function userTenantUnits(): HasMany
+{
+    return $this->hasMany(UserTenantUnit::class);
+}
 
     /**
      * The attributes that should be hidden for serialization.

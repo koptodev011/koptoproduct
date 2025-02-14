@@ -12,6 +12,8 @@ use App\Models\Businesscategory;
 use App\Models\State;
 use App\Models\User;
 use App\Models\City;
+use App\Models\TenantUnit;
+use App\Models\UserTenantUnit;
 use Illuminate\Support\Facades\Storage;
 
 class TenantController extends Controller
@@ -19,18 +21,42 @@ class TenantController extends Controller
 
 
 
+    // public function getAllBranchDetails()
+    // {
+    //     $user = auth()->user();
+        // $tenants = User::with('tenants','tenants.businesstype','tenants.businesscategory','tenants.state')->where('id', $user->id)->get();
+        
+        // $tenants = UserTenantUnit::where('user_id', $user->id)
+        // ->with('tenantable',) // This will load the polymorphic relation
+        // ->get();
+
+        // $tenants = UserTenantUnit::where('user_id', $user->id)
+        // ->with([
+        //     'tenantable' => function ($query) {
+        //         $query->with('businesstype', 'businesscategory', 'state', 'city');
+        //     }
+        // ])
+        // ->get();
+      
+    
+    //     return response()->json([
+    //         'message' => 'Tenant details retrieved successfully',
+    //         'tenants' => $tenants
+    //     ], 200);
+    // }
+
     public function getAllBranchDetails()
     {
         $user = auth()->user();
-        $tenants = User::with('tenants','tenants.businesstype','tenants.businesscategory','tenants.state')->where('id', $user->id)->get();
-        return response()->json([
+        $tenants = Tenant::with('tenantUnits.businesstype', 'tenantUnits.businesscategory', 'tenantUnits.state', 'tenantUnits.city')
+        ->where('user_id', $user->id)
+        ->get();
+      return response()->json([
             'message' => 'Tenant details retrieved successfully',
             'tenants' => $tenants
         ], 200);
     }
 
-
-  
 
 
     public function getBusinessCategory(){
@@ -90,10 +116,129 @@ class TenantController extends Controller
 
 
 
-    public function updateMainBranchDetails(Request $request){
+
+
+    // public function updateMainBranchDetails(Request $request){
       
+    //     $validator = Validator::make($request->all(), [
+    //         'tenant_id' => 'required|numeric|exists:tenants,id',
+    //         'business_name' => 'required|string',
+    //         'business_types_id' => 'nullable|numeric|exists:business_types,id',
+    //         'business_address' => 'nullable|string',
+    //         'business_email' => 'nullable|email',
+    //         'phone_number' => 'nullable|string',
+    //         'business_categories_id' => 'nullable|numeric|exists:business_categories,id',
+    //         'TIN_number' => 'nullable|string',
+    //         'state_id' => 'nullable|numeric|exists:states,id',
+    //         'business_email' => 'nullable|email',
+    //         'pin_code' => 'nullable|numeric|digits:6',
+    //         'city_id' => 'nullable|numeric',
+    //         'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+    //         'business_signature' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',   
+    //     ]);
+    
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 400);
+    //     }
+
+    //     $user = auth()->user(); 
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'User not authenticated'
+    //         ], 400);
+    //     }
+    //     $tenant = Tenant::where('user_id', $user->id)
+    //     ->where('id',$request->tenant_id)->first();
+    //     if (!$tenant) {
+    //         return response()->json([
+    //             'message' => 'Tenant not found'
+    //         ], 404);
+    //     }
+
+    //     $tenantUnit = TenantUnit::where('tenant_id', $tenant->id)->first();
+    //     if (!$tenantUnit) {
+    //         return response()->json([
+    //             'message' => 'Tenant not found'
+    //         ], 404);
+    //     }
+
+    //     $tenant->update([
+    //         'business_name' => $request->business_name,
+    //         'business_types_id' => $request->business_types_id,
+    //         'business_address' => $request->business_address,
+    //         'phone_number' => $request->phone_number,
+    //         'business_categories_id' => $request->business_categories_id,
+    //         'TIN_number' => $request->TIN_number,
+    //         'state_id' => $request->state_id,
+    //         'business_email' => $request->business_email,
+    //         'pin_code' => $request->pin_code,
+    //         'city_id' => $request->city_id
+    //     ]);
+
+    //     $tenantUnit->update([
+    //         'business_name' => $request->business_name,
+    //         'business_types_id' => $request->business_types_id,
+    //         'business_address' => $request->business_address,
+    //         'phone_number' => $request->phone_number,
+    //         'business_categories_id' => $request->business_categories_id,
+    //         'TIN_number' => $request->TIN_number,
+    //         'state_id' => $request->state_id,
+    //         'business_email' => $request->business_email,
+    //         'pin_code' => $request->pin_code,
+    //         'city_id' => $request->city_id
+    //     ]);
+        
+      
+
+        
+
+    //     if ($request->hasFile('business_logo')) {
+    //         if ($tenant->business_logo) {
+    //             $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
+    //             if (Storage::disk('public')->exists($previousLogoPath)) {
+    //                 Storage::disk('public')->delete($previousLogoPath);
+    //             }
+    //         }
+    //         $logoPath = $request->file('business_logo')->store('logos', 'public');
+    //         $tenant->business_logo = Storage::url($logoPath);
+    //     } elseif ($request->input('business_logo') === null && $tenant->business_logo) {
+    //         $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
+    //         if (Storage::disk('public')->exists($previousLogoPath)) {
+    //             Storage::disk('public')->delete($previousLogoPath);
+    //         }
+    //         $tenant->business_logo = null;
+    //     }
+        
+        
+    
+    //     if ($request->hasFile('business_signature')) {
+    //         if ($tenant->business_signature) {
+    //             Storage::delete(str_replace('/storage/', '', $tenant->business_signature));
+    //         }
+    //         $signaturePath = $request->file('business_signature')->store('signatures', 'public');
+    //         $tenant->business_signature = Storage::url($signaturePath);
+    //     }
+    //     $tenant->update($request->except(['business_logo', 'business_signature']));
+
+
+    
+    //     return response()->json([
+    //         'message' => 'Tenant details updated successfully',
+    //         'tenant' => $tenant
+    //     ], 200);
+    // }
+
+
+
+
+
+
+    public function updateMainBranchDetails(Request $request){
         $validator = Validator::make($request->all(), [
-            'tenant_id' => 'required|numeric|exists:tenants,id',
+            'tenant_id' => 'required|numeric|exists:tenant_units,id',
             'business_name' => 'required|string',
             'business_types_id' => 'nullable|numeric|exists:business_types,id',
             'business_address' => 'nullable|string',
@@ -102,7 +247,6 @@ class TenantController extends Controller
             'business_categories_id' => 'nullable|numeric|exists:business_categories,id',
             'TIN_number' => 'nullable|string',
             'state_id' => 'nullable|numeric|exists:states,id',
-            'business_email' => 'nullable|email',
             'pin_code' => 'nullable|numeric|digits:6',
             'city_id' => 'nullable|numeric',
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
@@ -115,16 +259,31 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-
+    
         $user = auth()->user(); 
         if (!$user) {
             return response()->json([
                 'message' => 'User not authenticated'
             ], 400);
         }
-        $tenant = Tenant::where('user_id', $user->id)
-        ->where('id',$request->tenant_id)->first();
+    
+    
+        $tenantUnit = TenantUnit::where('id', $request->tenant_id)->first();
+           
+        if (!$tenantUnit) {
+            return response()->json([
+                'message' => 'Tenant unit not found'
+            ], 404);
+        }
 
+        $tenant = Tenant::where('id', $tenantUnit->tenant_id)->first();
+        if (!$tenant) {
+            return response()->json([
+                'message' => 'Tenant not found'
+            ], 404);
+        }
+    
+        // Update tenant details
         $tenant->update([
             'business_name' => $request->business_name,
             'business_types_id' => $request->business_types_id,
@@ -137,14 +296,22 @@ class TenantController extends Controller
             'pin_code' => $request->pin_code,
             'city_id' => $request->city_id
         ]);
-
-
-        if (!$tenant) {
-            return response()->json([
-                'message' => 'Tenant not found'
-            ], 404);
-        }
-
+    
+        // Update tenant unit details
+        $tenantUnit->update([
+            'business_name' => $request->business_name,
+            'business_type_id' => $request->business_types_id,
+            'business_address' => $request->business_address,
+            'phone_number' => $request->phone_number,
+            'business_category_id' => $request->business_categories_id,
+            'TIN_number' => $request->TIN_number,
+            'state_id' => $request->state_id,
+            'business_email' => $request->business_email,
+            'pin_code' => $request->pin_code,
+            'city_id' => $request->city_id
+        ]);
+    
+        // Handling business logo upload
         if ($request->hasFile('business_logo')) {
             if ($tenant->business_logo) {
                 $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
@@ -154,37 +321,43 @@ class TenantController extends Controller
             }
             $logoPath = $request->file('business_logo')->store('logos', 'public');
             $tenant->business_logo = Storage::url($logoPath);
+            $tenantUnit->business_logo = Storage::url($logoPath); // Assign to tenantUnit as well
         } elseif ($request->input('business_logo') === null && $tenant->business_logo) {
             $previousLogoPath = str_replace('/storage/', '', $tenant->business_logo);
             if (Storage::disk('public')->exists($previousLogoPath)) {
                 Storage::disk('public')->delete($previousLogoPath);
             }
             $tenant->business_logo = null;
+            $tenantUnit->business_logo = null; // Remove from tenantUnit as well
         }
-        
-        
     
+        // Handling business signature upload
         if ($request->hasFile('business_signature')) {
             if ($tenant->business_signature) {
                 Storage::delete(str_replace('/storage/', '', $tenant->business_signature));
             }
             $signaturePath = $request->file('business_signature')->store('signatures', 'public');
             $tenant->business_signature = Storage::url($signaturePath);
+            $tenantUnit->business_signature = Storage::url($signaturePath); // Assign to tenantUnit as well
+        } elseif ($request->input('business_signature') === null && $tenant->business_signature) {
+            $previousSignaturePath = str_replace('/storage/', '', $tenant->business_signature);
+            if (Storage::disk('public')->exists($previousSignaturePath)) {
+                Storage::disk('public')->delete($previousSignaturePath);
+            }
+            $tenant->business_signature = null;
+            $tenantUnit->business_signature = null; // Remove from tenantUnit as well
         }
-        $tenant->update($request->except(['business_logo', 'business_signature']));
+    
+        // Save changes to database
+        $tenant->save();
+        $tenantUnit->save();
     
         return response()->json([
             'message' => 'Tenant details updated successfully',
             'tenant' => $tenant
         ], 200);
     }
-
-
-
-
-
-
-
+    
 
     
     public function addNewFirm(Request $request)
@@ -210,33 +383,35 @@ class TenantController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-    
+
         $user = auth()->user();
         if (!$user) {
             return response()->json([
                 'message' => 'User not authenticated'
             ], 400);
         }
-        Tenant::where('user_id', $user->id)
-            ->where('isactive', 1)
-            ->update(['isactive' => 0]);
 
-        $tenant = new Tenant();
-        $tenant->user_id = $user->id;
+        $searchMainTeanat = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+        $searchActiveTenants = TenantUnit::where('tenant_id', $searchMainTeanat->id)->where('isactive',1)->get();
+        TenantUnit::where('tenant_id', $searchMainTeanat->id)->where('isactive', 1)->update(['isactive' => 0]);
+
+        $tenant = new TenantUnit();
+        $tenant->tenant_id = $searchMainTeanat->id;
         $tenant->business_name = $request->business_name;
-        $tenant->business_types_id = $request->business_type_id;
+        $tenant->business_type_id = $request->business_type_id;
         $tenant->business_address = $request->business_address;
         $tenant->phone_number = $request->phone_number;
-        $tenant->business_categories_id = $request->business_category_id;
+        $tenant->business_category_id = $request->business_category_id;
         $tenant->TIN_number = $request->TIN_number;
         $tenant->state_id = $request->state_id;
         $tenant->business_email = $request->business_email;
         $tenant->pin_code = $request->pin_code;
         $tenant->city_id = $request->city_id;
-
         $tenant->business_logo = null;
         $tenant->business_signature = null;
     
+       
+
         // Store logo file if present
         if ($request->hasFile('business_logo')) {
             $tenant->business_logo = Storage::url($request->file('business_logo')->store('logos', 'public'));
@@ -250,6 +425,11 @@ class TenantController extends Controller
         // Save tenant only once
         $tenant->save();
     
+        UserTenantUnit::create([
+            'user_id' => $user->id,
+            'tenant_id' => $tenant->id,
+            'tenant_type' => TenantUnit::class, // Storing the model class
+        ]);
         return response()->json([
             'message' => 'Tenant added successfully',
             'tenant' => $tenant
@@ -266,10 +446,8 @@ class TenantController extends Controller
     public function switchFirm(Request $request){
         $user = auth()->user(); 
        $validator = Validator::make($request->all(), [
-           'tenant_id' => 'required|numeric|exists:tenants,id',
+           'tenant_id' => 'required|numeric|exists:tenant_units,id',
        ]);
-
-
        if ($validator->fails()) {
            return response()->json([
                'message' => 'Validation failed',
@@ -277,15 +455,17 @@ class TenantController extends Controller
            ], 400);
        }
 
-       Tenant::where('user_id', $user->id)
-       ->where('isactive', 1)
-       ->update(['isactive' => 0]);
+       // here i deactivate all the active tenants
+       $maintenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+       $getcurrentactivetananet = TenantUnit::where('tenant_id', $maintenant->id)->where('isactive', 1)->get(); 
+         TenantUnit::where('tenant_id', $maintenant->id)->where('isactive', 1)->update(['isactive' => 0]);
 
-       $searchTenant = Tenant::where('user_id', $user->id)
-       ->where('id', $request->tenant_id)
-       ->first();
-       $searchTenant->update(['isactive' => 1]);
+         // here i activate the selected tenant
 
+            $tenant = TenantUnit::where('id', $request->tenant_id)->first();
+            $tenant->update([
+                'isactive' => 1
+            ]);
        return response()->json([
            'message' => 'Tenant switched successfully'
        ], 200);
@@ -315,8 +495,10 @@ class TenantController extends Controller
     public function getActiveTanent()
     {
         $user = auth()->user();
-        $tenants = Tenant::with(['user', 'businesstype', 'businesscategory', 'state', 'city']) // Include city
-        ->where('user_id', $user->id)
+        $maintenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+     
+        $tenants = TenantUnit::with(['user', 'businesstype', 'businesscategory', 'state', 'city']) 
+        ->where('tenant_id', $maintenant->id)
         ->where('isactive', 1)
         ->get();
 
