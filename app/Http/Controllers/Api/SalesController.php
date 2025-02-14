@@ -51,7 +51,7 @@ class SalesController extends Controller
 
 
     public function addSaleInvoice(Request $request)
-    {   
+    {  
         $validator = Validator::make($request->all(), [
             "sale_type" => "nullable|numeric",
             "party_id" => "nullable|integer",
@@ -70,8 +70,7 @@ class SalesController extends Controller
             "items.*.item_amount" => "required|integer", 
             "items.*.discount_percentage" => "nullable|integer", 
             "items.*.tax_amount" => "nullable|integer",
-        ]);
-       
+        ]);    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
