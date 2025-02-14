@@ -30,8 +30,8 @@ class ProductController extends Controller
     public function addProduct(Request $request){
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'product_name' => 'nullable|string|Unique:products,product_name',
-            'product_hsn' => 'required|unique:products,product_hsn',
+            'product_name' => 'nullable|string',
+            'product_hsn' => 'required',
             'base_unit_id' => 'required|exists:productbaseunits,id',
             'secondary_unit_id' => 'nullable|exists:productbaseunits,id',
             'conversion_rate' => 'nullable',
@@ -61,6 +61,7 @@ class ProductController extends Controller
             'at_price'=> 'nullable|numeric',
             'min_stock'=> 'nullable|numeric',
             'location'=> 'nullable|string',
+            'date' => 'nullable|date',
         
             // online store
             'online_store_price'=> 'nullable|numeric',
@@ -130,9 +131,11 @@ class ProductController extends Controller
         $stock->at_price = $request->at_price;
         $stock->min_stock = $request->min_stock;
         $stock->location = $request->location;
+        $stock->date = $request->date;
         $stock->product_id = $product->id;
         $stock->save();
         }
+
 
 
         $purchaseprice = new Productpurchesprice();
