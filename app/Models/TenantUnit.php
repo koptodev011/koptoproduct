@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-class Tenant extends Model
+class TenantUnit extends Model
 {
-    
+     
     protected $fillable = [
         'business_name',
-        'business_types_id',
+        'business_type_id',
         'business_address',
         'phone_number',
-        'business_categories_id',
+        'business_category_id',
         'TIN_number',
         'state_id',
         'business_email',
@@ -25,6 +25,9 @@ class Tenant extends Model
         'isonlinestore'
     ];
 
+  
+
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -32,7 +35,7 @@ class Tenant extends Model
 
     public function businesstype()
     {
-        return $this->belongsTo(BusinessType::class, 'business_types_id');
+        return $this->belongsTo(BusinessType::class, 'business_type_id');
     }
 
     // public function businesstype(){
@@ -40,7 +43,7 @@ class Tenant extends Model
     // }
     public function businesscategory()
     {
-        return $this->belongsTo(BusinessCategory::class, 'business_categories_id');
+        return $this->belongsTo(BusinessCategory::class, 'business_category_id');
     }
 
     public function state()
@@ -53,15 +56,11 @@ class Tenant extends Model
         return $this->belongsTo(City::class, 'city_id'); // Specify the foreign key if it’s not 'city_id'
     }
 
-    public function userTenantUnits(): HasMany
-{
-    return $this->hasMany(UserTenantUnit::class, 'tenant_id');
-}
-  
-
-public function tenantUnits(): HasMany
-{
-    return $this->hasMany(TenantUnit::class, 'tenant_id');
-}
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+    
+ 
 
 }

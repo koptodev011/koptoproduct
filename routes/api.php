@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getactivetenant', [TenantController::class, 'getActiveTanent']);
     Route::post('/schedulereminder', [PartyController::class, 'scheduleReminder']);
     Route::post('/updatepartydetails', [PartyController::class, 'updatePartyDetails']);
+    Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);
 });
 
 // Get business type
@@ -53,7 +54,7 @@ Route::get('/getbusinesscategory', [TenantController::class, 'getBusinessCategor
 Route::get('/getallstates', [TenantController::class, 'getAllStates']);
 // Add party group
 Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
-Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);
+
 Route::get('/getpartyreminder', [PartyController::class, 'getPartyReminder']);
 Route::get('/deleteparty', [TenantController::class, 'deleteParty']);
 

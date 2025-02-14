@@ -10,4 +10,10 @@ class State extends Model
     {
         return $this->hasMany(Tenant::class);
     }
+
+    public function tenantUnit()
+    {
+        return $this->hasMany(TenantUnit::class);
+    }
+    
 }

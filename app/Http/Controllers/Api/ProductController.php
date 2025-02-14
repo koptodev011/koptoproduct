@@ -21,6 +21,7 @@ use App\Models\Productstockadjectment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Models\Tenant;
 use Carbon\Carbon;
 class ProductController extends Controller
 {
@@ -29,8 +30,8 @@ class ProductController extends Controller
     public function addProduct(Request $request){
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'product_name' => 'nullable|string',
-            'product_hsn' => 'required',
+            'product_name' => 'nullable|string|Unique:products,product_name',
+            'product_hsn' => 'required|unique:products,product_hsn',
             'base_unit_id' => 'required|exists:productbaseunits,id',
             'secondary_unit_id' => 'nullable|exists:productbaseunits,id',
             'conversion_rate' => 'nullable',
@@ -71,6 +72,7 @@ class ProductController extends Controller
 
 
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
@@ -79,7 +81,9 @@ class ProductController extends Controller
         if($request->base_unit_id == $request->secondary_unit_id){
             return response()->json(['message' => 'Base unit and secondary unit cannot be same'], 400);
         }
-        
+
+        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+
         $unitconversion = new Productunitconversion();
         $unitconversion->product_base_unit_id = $request->base_unit_id;
         $unitconversion->product_secondary_unit_id = $request->secondary_unit_id;
@@ -89,7 +93,7 @@ class ProductController extends Controller
         
 
         $product = new Product();
-        $product->user_id = $user->id;
+        $product->tenant_id = $searchMainTanant->id;
         $product->product_name = $request->product_name;
         $product->product_hsn = $request->product_hsn;
         $product->item_code = $request->assign_code;
@@ -170,7 +174,8 @@ class ProductController extends Controller
 public function getProducts(Request $request)
 {
     $user = Auth::user();
-    $products = Product::where('user_id', $user->id)
+    $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+    $products = Product::where('tenant_id', $searchMainTanant->id)
         ->with([ 
             'pricing',       
             'wholesalePrice', 
@@ -337,11 +342,11 @@ if ($request->hasFile('product_images')) {
 public function deleteProduct($product_id){
     try {
         $product = Product::findOrFail($product_id);
-
+       
         DB::beginTransaction();
         try {
             // Delete related records
-            Productunitconversion::where('product_id', $product_id)->delete();
+            // Productunitconversion::where('product_id', $product_id)->delete();
             Productpricing::where('product_id', $product_id)->delete();
             Productwholesaleprice::where('product_id', $product_id)->delete();
             Productstock::where('product_id', $product_id)->delete();
@@ -396,8 +401,14 @@ public function deleteProduct($product_id){
     public function getProductDetails(Request $request)
 {
     $user = Auth::user();
+    $validator = Validator::make($request->all(), [
+        'product_id' => 'required|numeric'
+    ]);
+
+    $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+
     $product = Product::where('id', $request->product_id)
-        ->where('user_id', $user->id)
+        ->where('tenant_id', $searchMainTanant->id)
         ->with([
             'productUnitConversion',
             'pricing',
@@ -601,7 +612,6 @@ public function getPerticularProductCategory(Request $request)
     }
 
     $user = Auth::user();
-
     $productcategories = Productcategory::where('is_delete', false)
         ->where('id', $request->product_category_id)
         ->where('user_id', $user->id)
@@ -645,6 +655,8 @@ public function getPerticularProductCategory(Request $request)
 
     return response()->json(['message' => 'Product category updated successfully'], 200);
 }
+
+
 
 
 public function deleteProductCategory($category_id)
@@ -785,6 +797,8 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Product unit conversion created successfully'], 200);
     }
 
+
+    
     
 }
 
