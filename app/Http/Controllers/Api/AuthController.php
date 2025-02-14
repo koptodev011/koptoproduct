@@ -149,14 +149,15 @@ class AuthController extends Controller
     $tenant->save();
 
     // Update User with Tenant ID
-    $user->tenant_id = $tenant->id;
-    $user->save();
+
 
     $tenantUnit = new TenantUnit();
     $tenantUnit->business_name = 'Business Name';
     $tenantUnit->tenant_id = $tenant->id;
     $tenantUnit->save();
 
+    $user->user_tenant_unit_id = $tenantUnit->id;
+    $user->save();
 
     // Insert into UserTenantUnit table
     UserTenantUnit::create([
@@ -234,15 +235,16 @@ public function addStaff(Request $request)
             'errors' => $validator->errors()
         ], 400);
     }
+    $searchMainTanant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+    $tenant = TenantUnit::where('tenant_id', $searchMainTanant->id)->where('isactive', 1)->first();
 
-    $tenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
 
     $newUser = new User();
     $newUser->name = $request->name;
     $newUser->email = $request->email;
     $newUser->mobile_number = $request->mobile_number;
     $newUser->role_id = $request->role_id;
-    $newUser->tenant_id = $tenant->id;
+    $newUser->user_tenant_unit_id = $tenant->id;
 
     if ($request->hasFile('profile_photo')) {
         $file = $request->file('profile_photo');
@@ -261,24 +263,45 @@ public function addStaff(Request $request)
 
 
 
- public function getAllStaff()
- {
-     $user = auth()->user();
-     $tenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+//  public function getAllStaff()
+//  {
+//      $user = auth()->user();
+//      $mainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+//      $tenants = TenantUnit::where('tenant_id', $mainTenant->id)->get();
      
-     if (!$tenant) {
-         return response()->json(['message' => 'Tenant not found'], 404);
-     }
-     $users = User::where('tenant_id', $tenant->id)
-         ->get()
-         ->map(function ($user) {
-             $user->role = $user->role_id == 2 ? 'Admin' : ($user->role_id == 3 ? 'Staff' : 'Unknown');
-             return $user;
-         });
-     return response()->json($users, 200);
- }
+//      if (!$tenant) {
+//          return response()->json(['message' => 'Tenant not found'], 404);
+//      }
+//      $users = User::where('tenant_id', $tenant->id)
+//          ->get()
+//          ->map(function ($user) {
+//              $user->role = $user->role_id == 2 ? 'Admin' : ($user->role_id == 3 ? 'Staff' : 'Unknown');
+//              return $user;
+//          });
+//      return response()->json($users, 200);
+//  }
  
- 
+public function getAllStaff()
+{
+    $user = auth()->user();
+    $mainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+    $tenantUnits = TenantUnit::where('tenant_id', $mainTenant->id)->get();
+
+    if (!$mainTenant) {
+        return response()->json(['message' => 'Tenant not found'], 404);
+    }
+
+    $tenantUnitIds = $tenantUnits->pluck('id')->toArray();
+
+    $users = User::whereIn('user_tenant_unit_id', $tenantUnitIds)
+        ->get()
+        ->map(function ($user) {
+            $user->role = $user->role_id == 2 ? 'Admin' : ($user->role_id == 3 ? 'Staff' : 'Unknown');
+            return $user;
+        });
+
+    return response()->json($users, 200);
+}
 
 
 
