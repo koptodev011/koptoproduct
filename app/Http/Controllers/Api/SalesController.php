@@ -77,7 +77,7 @@ class SalesController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-    
+
         $user = auth()->user();  
         $sale = new Sale();
         $sale->sale_type = $request->sale_type;
