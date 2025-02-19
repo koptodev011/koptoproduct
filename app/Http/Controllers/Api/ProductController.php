@@ -819,28 +819,78 @@ public function bulkDeleteCategories(Request $request)
         return response()->json(['message' => 'Product unit conversion created successfully'], 200);
     }
 
-    public function getUnitConversion(Request $request){
-        $user = Auth::user();
-        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
-        $validator = Validator::make($request->all(), [
-            'unit_id' => 'required|exists:productbaseunits,id'
-        ]);
+    // public function getUnitConversion(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+    //     $validator = Validator::make($request->all(), [
+    //         'unit_id' => 'required|exists:productbaseunits,id'
+    //     ]);
     
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 400);
+    //     }
     
-        $getconversions = Productunitconversion::where('product_base_unit_id', $request->unit_id)
-            ->join('productbaseunits as base_unit', 'productunitconversions.product_base_unit_id', '=', 'base_unit.id')
-            ->join('productbaseunits as secondary_unit', 'productunitconversions.product_secondary_unit_id', '=', 'secondary_unit.id')
-            ->select('base_unit.product_base_unit as base_unit_name', 'secondary_unit.product_base_unit as secondary_unit_name', 'productunitconversions.conversion_rate')->where('productunitconversions.tenant_id', $searchMainTanant->id)
-            ->get();
+    //     $baseUnit = Productbaseunit::find($request->unit_id);
+    //     $baseUnitName = $baseUnit->product_base_unit . ' (' . $baseUnit->shortname . ')';
     
-        return response()->json($getconversions, 200);
+    //     $getconversions = Productunitconversion::where('product_base_unit_id', $request->unit_id)
+    //         ->join('productbaseunits as base_unit', 'productunitconversions.product_base_unit_id', '=', 'base_unit.id')
+    //         ->join('productbaseunits as secondary_unit', 'productunitconversions.product_secondary_unit_id', '=', 'secondary_unit.id')
+    //         ->select('base_unit.product_base_unit as base_unit_name', 'secondary_unit.product_base_unit as secondary_unit_name', 'productunitconversions.conversion_rate')
+    //         ->where('productunitconversions.tenant_id', $searchMainTanant->id)
+    //         ->get();
+    
+    //     $formattedConversions = $getconversions->map(function ($conversion) {
+    //         return [
+    //             'base_unit_name' => $conversion->base_unit_name . ' (' . $conversion->shortname . ')',
+    //             'secondary_unit_name' => $conversion->secondary_unit_name . ' (' . $conversion->shortname . ')',
+    //             'conversion_rate' => $conversion->conversion_rate
+    //         ];
+    //     });
+    
+    //     return response()->json([
+    //         'product_base_units' => $baseUnitName,
+    //         'productconversions' => $formattedConversions
+    //     ], 200);
+    // }
+
+
+    public function getUnitConversion(Request $request)
+{
+    $user = Auth::user();
+    $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+    $validator = Validator::make($request->all(), [
+        'unit_id' => 'required|exists:productbaseunits,id'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 400);
     }
 
+    $baseUnit = Productbaseunit::find($request->unit_id);
+    $baseUnitName = $baseUnit->product_base_unit;
 
+    $getconversions = Productunitconversion::where('product_base_unit_id', $request->unit_id)
+        ->join('productbaseunits as base_unit', 'productunitconversions.product_base_unit_id', '=', 'base_unit.id')
+        ->join('productbaseunits as secondary_unit', 'productunitconversions.product_secondary_unit_id', '=', 'secondary_unit.id')
+        ->select('base_unit.product_base_unit as base_unit_name', 'secondary_unit.product_base_unit as secondary_unit_name', 'productunitconversions.conversion_rate', 'base_unit.shortname as base_unit_shortname', 'secondary_unit.shortname as secondary_unit_shortname')
+        ->where('productunitconversions.tenant_id', $searchMainTanant->id)
+        ->get();
 
+    $formattedConversions = $getconversions->map(function ($conversion) {
+        return [
+            'base_unit_name' => $conversion->base_unit_name,
+            'secondary_unit_name' => $conversion->secondary_unit_name ,
+            'conversion_rate' => $conversion->conversion_rate
+        ];
+    });
+
+    return response()->json([
+        'product_base_units' => $baseUnitName,
+        'productconversions' => $formattedConversions
+    ], 200);
+}
     
     
 }
