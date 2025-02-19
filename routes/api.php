@@ -91,13 +91,26 @@ Route::get('/getperticularproductcategory',[ProductController::class,'getPerticu
 Route::post('/updatecategory', [ProductController::class, 'updateCategory']);
 Route::delete('/deleteproductcategory/{product_category_id}', [ProductController::class, 'deleteProductCategory']);
 Route::post('/bulkdeletecategories', [ProductController::class, 'bulkDeleteCategories']);
-Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
-Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
+
+
+//units section
+// Route::middleware('auth:sanctum')->group(function () {
+// Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
+// )};
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/addbaseunit', [ProductController::class, 'addBaseUnit']);
+    Route::get('/getbaseunit', [ProductController::class, 'getBaseUnit']);
+    Route::post('/addunitconversion', [ProductController::class, 'addConversionunits']);
+    Route::get('/getunitconversion', [ProductController::class, 'getUnitConversion']);
+});
+
+
 Route::post('/updatebaseunit', [ProductController::class, 'updateBaseUnit']);
 Route::delete('/deletebaseunit/{product_base_unit_id}', [ProductController::class, 'deleteBaseUnit']);
 Route::post('/bulkdeletebaseunits', [ProductController::class, 'bulkDeleteBaseUnits']);
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
-Route::post('/addunitconversion', [ProductController::class, 'addConversionunits']);
+
 
 
 

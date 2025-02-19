@@ -78,6 +78,8 @@ class SalesController extends Controller
             ], 400);
         }
 
+        dd($request->all());
+        
         $user = auth()->user();  
         $sale = new Sale();
         $sale->sale_type = $request->sale_type;

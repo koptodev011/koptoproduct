@@ -78,6 +78,7 @@ class ProductController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
+        
 
         if($request->base_unit_id == $request->secondary_unit_id){
             return response()->json(['message' => 'Base unit and secondary unit cannot be same'], 400);
@@ -89,6 +90,7 @@ class ProductController extends Controller
         $unitconversion->product_base_unit_id = $request->base_unit_id;
         $unitconversion->product_secondary_unit_id = $request->secondary_unit_id;
         $unitconversion->conversion_rate = $request->conversion_rate;
+        $unitconversion->tenant_id = $searchMainTanant->id;
         $unitconversion->save();
 
         
@@ -700,6 +702,7 @@ public function bulkDeleteCategories(Request $request)
 
 
     public function addBaseUnit(Request $request){
+        $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'product_base_unit' => 'required',
             'short_name' => 'required'
@@ -707,9 +710,12 @@ public function bulkDeleteCategories(Request $request)
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
+        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+
         $productbaseunit = new Productbaseunit();
         $productbaseunit->product_base_unit = $request->product_base_unit;
         $productbaseunit->shortname = $request->short_name;
+        $productbaseunit->tenant_id = $searchMainTanant->id;
         $productbaseunit->save();
         return response()->json(['message' => 'Product base unit created successfully'], 200);
     }
@@ -739,8 +745,18 @@ public function bulkDeleteCategories(Request $request)
     }
 
 
-    public function getBaseUnit(){
-        $productbaseunits = Productbaseunit::where('is_delete', false)->get();
+    public function getBaseUnit()
+    {
+        $user = Auth::user();
+        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+        
+        $productbaseunits = Productbaseunit::where('is_delete', false)
+            ->where(function ($query) use ($searchMainTanant) {
+                $query->whereNull('tenant_id')
+                      ->orWhere('tenant_id', $searchMainTanant->id);
+            })
+            ->get();
+            
         return response()->json($productbaseunits, 200);
     }
 
@@ -781,6 +797,7 @@ public function bulkDeleteCategories(Request $request)
   
     public function addConversionunits(Request $request)
     { 
+        $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'base_unit_id' => 'required|exists:productbaseunits,id',
             'secondary_unit_id' => 'required|exists:productbaseunits,id',
@@ -790,15 +807,38 @@ public function bulkDeleteCategories(Request $request)
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
-    
+
+        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
         $unitconversions = new Productunitconversion();
         $unitconversions->product_base_unit_id = $request->base_unit_id;
         $unitconversions->product_secondary_unit_id = $request->secondary_unit_id;
         $unitconversions->conversion_rate = $request->conversion_rate;
+        $unitconversions->tenant_id = $searchMainTanant->id;
         $unitconversions->save();
     
         return response()->json(['message' => 'Product unit conversion created successfully'], 200);
     }
+
+    public function getUnitConversion(Request $request){
+        $user = Auth::user();
+        $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+        $validator = Validator::make($request->all(), [
+            'unit_id' => 'required|exists:productbaseunits,id'
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+    
+        $getconversions = Productunitconversion::where('product_base_unit_id', $request->unit_id)
+            ->join('productbaseunits as base_unit', 'productunitconversions.product_base_unit_id', '=', 'base_unit.id')
+            ->join('productbaseunits as secondary_unit', 'productunitconversions.product_secondary_unit_id', '=', 'secondary_unit.id')
+            ->select('base_unit.product_base_unit as base_unit_name', 'secondary_unit.product_base_unit as secondary_unit_name', 'productunitconversions.conversion_rate')->where('productunitconversions.tenant_id', $searchMainTanant->id)
+            ->get();
+    
+        return response()->json($getconversions, 200);
+    }
+
 
 
     
