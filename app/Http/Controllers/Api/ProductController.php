@@ -78,6 +78,7 @@ class ProductController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
+        
 
         if($request->base_unit_id == $request->secondary_unit_id){
             return response()->json(['message' => 'Base unit and secondary unit cannot be same'], 400);
@@ -799,6 +800,25 @@ public function bulkDeleteCategories(Request $request)
     
         return response()->json(['message' => 'Product unit conversion created successfully'], 200);
     }
+
+    public function getUnitConversion(Request $request){
+        $validator = Validator::make($request->all(), [
+            'unit_id' => 'required|exists:productbaseunits,id'
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+    
+        $getconversions = Productunitconversion::where('product_base_unit_id', $request->unit_id)
+            ->join('productbaseunits as base_unit', 'productunitconversions.product_base_unit_id', '=', 'base_unit.id')
+            ->join('productbaseunits as secondary_unit', 'productunitconversions.product_secondary_unit_id', '=', 'secondary_unit.id')
+            ->select('base_unit.product_base_unit as base_unit_name', 'secondary_unit.product_base_unit as secondary_unit_name', 'productunitconversions.conversion_rate')
+            ->get();
+    
+        return response()->json($getconversions, 200);
+    }
+
 
 
     

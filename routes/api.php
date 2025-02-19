@@ -98,7 +98,7 @@ Route::delete('/deletebaseunit/{product_base_unit_id}', [ProductController::clas
 Route::post('/bulkdeletebaseunits', [ProductController::class, 'bulkDeleteBaseUnits']);
 Route::get('/assigncode', [ProductController::class, 'assignCode']);
 Route::post('/addunitconversion', [ProductController::class, 'addConversionunits']);
-
+Route::get('/getunitconversion', [ProductController::class, 'getUnitConversion']);
 
 
 // Sales Routes
