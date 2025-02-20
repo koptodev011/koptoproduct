@@ -146,6 +146,7 @@ class AuthController extends Controller
     // Create Tenant
     $tenant = new Tenant();
     $tenant->user_id = $user->id;
+    $tenant->phone_number = $request->mobile_number;
     $tenant->save();
 
     // Update User with Tenant ID
