@@ -169,7 +169,7 @@ class AuthController extends Controller
     // Create Product Category
     $productcategory = new Productcategory();
     $productcategory->product_category = 'General';
-    $productcategory->user_id = $user->id;
+    $productcategory->tenant_id = $tenant->id;
     $productcategory->save();
 
     // Create Party Group
