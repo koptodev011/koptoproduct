@@ -11,6 +11,11 @@ use App\Models\Salefilterindex;
 use App\Models\PaymentType;
 use App\Models\Paymentin;
 use App\Models\Party;
+use App\Models\Tenant;
+use App\Models\TenantUnit;
+use App\Models\PartyType;
+use App\Models\PartyCategory;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 class SalesController extends Controller
@@ -50,74 +55,150 @@ class SalesController extends Controller
 
 
 
+
     public function addSaleInvoice(Request $request)
-    {  
-        $validator = Validator::make($request->all(), [
-            "sale_type" => "nullable|numeric",
-            "party_id" => "nullable|integer",
-            "billing_name" => "nullable|string",
-            "phone_number" => "nullable|string",
-            "po_number" => "required|numeric",
-            "po_date" => "required|string",
-            "sale_description" => "nullable|string",
-            "sale_image" => "nullable",
-            "received_amount" => "nullable|integer",
-            "payment_type_id" => "required|integer",
-            "items" => "required|array",
-            "items.*.product_id" => "required|integer|exists:products,id",
-            "items.*.quantity" => "required|integer",
-            "items.*.price_per_unit" => "required|integer",
-            "items.*.item_amount" => "required|integer", 
-            "items.*.discount_percentage" => "nullable|integer", 
-            "items.*.tax_amount" => "nullable|integer",
-        ]);    
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 400);
+{  
+    $validator = Validator::make($request->all(), [
+        "sale_type" => "nullable|numeric",
+        "party_id" => "nullable|integer",
+        "billing_name" => "nullable|string",
+        "phone_number" => "nullable|string",
+        "po_number" => "required|numeric",
+        "po_date" => "required|string",
+        "sale_description" => "nullable|string",
+        "sale_image" => "nullable",
+        "sales_document" => "nullable",
+        "received_amount" => "nullable|integer",
+        "payment_type_id" => "required|integer",
+
+        // Items array validation
+        "items" => "required|array",
+        "items.*.product_id" => "required|integer|exists:products,id",
+        "items.*.quantity" => "required|integer",
+        "items.*.price_per_unit" => "required", 
+        "items.*.discount_percentage" => "nullable|integer", 
+        "items.*.discount_amount" => "nullable|integer",
+        "items.*.tax_percentage" => "nullable|integer",
+        "items.*.tax_amount" => "nullable|integer",
+        "items.*.unit_id" => "required|integer",
+        "items.*.product_amount" => "required",
+        "total_amount" => "required",
+    ]);   
+     
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+
+    $user = auth()->user(); 
+    $maintenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+ 
+    $tenants = TenantUnit::with(['user', 'businesstype', 'businesscategory', 'state', 'city']) 
+        ->where('tenant_id', $maintenant->id)
+        ->where('isactive', 1)
+        ->first();
+
+    $sale = new Sale();
+    $sale->sale_type = $request->sale_type;
+    $sale->party_id = $request->party_id;
+    $sale->billing_name = $request->billing_name;
+    $sale->phone_number = $request->phone_number;
+    $sale->po_number = $request->po_number;
+    $sale->po_date = $request->po_date;
+    $sale->received_amount = $request->received_amount;
+    $sale->payment_type_id = $request->payment_type_id;
+    $sale->sale_description = $request->sale_description;
+    $sale->sale_image = $request->sale_image;
+    $sale->status = "sale";
+    $sale->total_amount = $request->total_amount;
+    $sale->tenant_unit_id = $tenants->id;
+    $sale->save();
+ 
+    $products = []; // Array to store product details
+
+    foreach ($request->items as $item) {
+        $productSale = new ProductSale();
+        $productSale->product_id = $item['product_id'];
+        $productSale->quantity = $item['quantity'];
+        $productSale->amount = $item['product_amount'];
+        $productSale->unit_id = $item['unit_id'];
+        $productSale->priceperunit = $item['price_per_unit'];
+        $productSale->discount_percentage = $item['discount_percentage'] ?? null;
+        $productSale->discount_amount = $item['discount_amount'] ?? null;
+        $productSale->tax_percentage = $item['tax_percentage'] ?? null;
+        $productSale->tax_amount = $item['tax_amount'] ?? null;
+        $productSale->sale_id = $sale->id;
+        $productSale->save();
+        
+        $searchMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+        
+        $product = Product::where('id', $item['product_id']) // Fixed reference
+            ->where('tenant_id', $searchMainTenant->id)
+            ->with([
+                'productUnitConversion',
+                'pricing',
+                'wholesalePrice',
+                'stock',
+                'onlineStore',
+                'images',
+                'purchasePrice'
+            ])
+            ->first();
+
+           
+               
+            if ($product->productUnitConversion->product_base_unit_id == $productSale->unit_id) {
+               
+            }
+            if ($product->productUnitConversion->product_secondary_unit_id == $productSale->unit_id) {
+                $productStock = $product->stock; 
+                if ($productStock) {
+                    $productStock->secondaryunit_stock_value -= $productSale->quantity;
+                    if ($productStock->secondaryunit_stock_value < 0) {
+                        return response()->json([
+                            'message' => 'Not enough stock available for this product',
+                            'product_id' => $product->id
+                        ], 400);
+                    }
+            
+                    $productStock->save();
+                    $productstock = $product->stock->product_stock;
+                    $productconversionrate = $product->productUnitConversion->conversion_rate;
+                    $stockvalue = $productstock * $productconversionrate;
+                    $buyingstock = $item['quantity'] / $productconversionrate;
+                    if($item['quantity'] < $productconversionrate){
+                        return response()->json([
+                            'message' => 'Sale invoice created successfully'
+                        ], 200);
+                        // elseif($item['quantity'] == $){
+                            // $productStock->product_stock -= 1;
+                            // $productStock->save();
+                    }
+                    else{
+                        $productStock->product_stock -= $buyingstock;
+                        $productStock->save();
+                    }
+                }
+            }
+            
+        
+        if ($product) {
+            $products[] = $product; // Store the product details
         }
 
-        dd($request->all());
         
-        $user = auth()->user();  
-        $sale = new Sale();
-        $sale->sale_type = $request->sale_type;
-        $sale->party_id = $request->party_id;
-        $sale->billing_name = $request->billing_name;
-        $sale->phone_number = $request->phone_number;
-        $sale->po_number = $request->po_number;
-        $sale->po_date = $request->po_date;
-        $sale->received_amount = $request->received_amount;
-        $sale->payment_type_id = $request->payment_type_id;
-        $sale->sale_description = $request->sale_description;
-        $sale->sale_image = $request->sale_image;
-        $sale->user_id = $user->id;
-        $sale->status = "sale";
-        $sale->save();
-    
-        // Iterate over the items and store them in the ProductSale table
-        foreach ($request->items as $item) {
-            $productSale = new ProductSale();
-            $productSale->product_id = $item['product_id'];
-            $productSale->quantity = $item['quantity'];
-            $productSale->amount = $item['item_amount'];
-            $productSale->unit_id= $item['unit_id'];
-            $productSale->priceperunit = $item['price_per_unit'];
-            $productSale->discount_percentage = $item['discount_percentage'] ?? null;
-            $productSale->discount_amount = $item['discount_amount'] ?? null;
-            $productSale->tax_percentage = $item['tax_percentage']?? null;
-            $productSale->tax_amount = $item['tax_amount'] ?? null;
-            $productSale->sale_id = $sale->id;
-            $productSale->save();
-        }
-    
-        return response()->json([
-            'message' => 'Sale invoice created successfully',
-            'data' => $request->all(),
-        ], 200);
+
     }
-    
+    dd("ok");
+
+    return response()->json([
+        'message' => 'Sale invoice created successfully',
+        'data' => $products, // Returning all fetched products
+    ], 200);
+}
+
 
 
 

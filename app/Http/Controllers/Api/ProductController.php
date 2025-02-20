@@ -138,7 +138,13 @@ class ProductController extends Controller
         $stock->save();
         }
 
-
+        if($request->has('base_unit_id') && $request->secondary_unit_id == null){
+            $stock->secondaryunit_stock_value = $request->opening_stock;
+            $stock->save();
+        }else{
+            $stock->secondaryunit_stock_value = $request->opening_stock * $unitconversion->conversion_rate;
+            $stock->save();
+        }
 
         $purchaseprice = new Productpurchesprice();
         $purchaseprice->product_purches_price = $request->purchese_price;
@@ -204,62 +210,65 @@ public function getProducts(Request $request)
 
 
 
-
-
 public function editProdutDetails(Request $request) {
     
+    // Validate incoming request data
     $validator = Validator::make($request->all(), [
-        'product_id' => 'required',
+        'product_id' => 'required|numeric',
         'product_name' => 'nullable|string',
-        'product_hsn' => 'nullable',
-        'base_unit_id' => 'required|numeric',
+        'product_hsn' => 'nullable|string',
+        'base_unit_id' => 'nullable|numeric',
         'secondary_unit_id' => 'nullable|numeric',
         'conversion_rate' => 'nullable|numeric',
         'description' => 'nullable|string',    
         'mrp' => 'nullable|numeric',
         'product_category'=> 'nullable|numeric',
-        'assign_code'=> 'required',
+        'assign_code'=> 'nullable|string',
 
-        // sale price
-        'sale_price'=> 'required|numeric',
-        'sale_withorwithouttax'=> 'required|numeric',
+        // Sale price
+        'sale_price'=> 'nullable|numeric',
+        'sale_withorwithouttax'=> 'nullable|numeric',
         'discount_amount'=> 'nullable|numeric',
         'discount_percentageoramount'=> 'nullable|numeric',
 
-        // wholesale price
+        // Wholesale price
         'wholesale_price'=> 'nullable|numeric',
         'wholesale_withorwithouttax'=> 'nullable|numeric',
         'wholesale_min_quantity'=> 'nullable|numeric',
-        'purchese_price'=> 'required|numeric',
-        'purchese_withorwithouttax'=> 'required|numeric',
-        'tax_id'=> 'required|numeric',
+        'purchese_price'=> 'nullable|numeric',
+        'purchese_withorwithouttax'=> 'nullable|numeric',
+        'tax_id'=> 'nullable|numeric',
         
-        // stock
+        // Stock
         'opening_stock'=> 'nullable|numeric',
         'at_price'=> 'nullable|numeric',
         'min_stock'=> 'nullable|numeric',
         'location'=> 'nullable|string',
 
-        // online store
+        // Online store
         'online_store_price'=> 'nullable|numeric',
         'online_store_product_description'=> 'nullable|string',
 
-        // product images
-        'product_images' => 'required|array',
+        // Product images
+        'product_images' => 'nullable|array',
         'product_images.*' => 'image|mimes:jpeg,png,jpg,gif',
     ]);
 
+    // Return validation errors if any
     if ($validator->fails()) {
         return response()->json($validator->errors(), 400);
     }
 
+    // Find the product by ID
     $product = Product::find($request->product_id);
 
+    // Return error if product not found
     if (!$product) {
         return response()->json(['error' => 'Product not found'], 404);
     }
 
-    $product->update([
+    // Update product attributes only if they are present in the request
+    $product->update(array_filter([
         'product_name' => $request->product_name,
         'product_hsn' => $request->product_hsn,
         'product_base_unit' => $request->base_unit_id,
@@ -268,74 +277,79 @@ public function editProdutDetails(Request $request) {
         'category_id' => $request->product_category,
         'item_code' => $request->assign_code,
         'tax_id' => $request->tax_id
-    ]);
+    ]));
 
-    // DB::table('productimages')->where('product_id', $product->id)->delete();
-    // if ($request->hasFile('product_images')) {
-    //     foreach ($request->file('product_images') as $image) {
-    //         $imagePath = $image->store('product_images', 'public');
-    //         DB::table('productimages')->insert([
-    //             'product_id' => $product->id,
-    //             'product_image' => $imagePath
-    //         ]);
-    //     }
-    // }
+    // Handle new product images upload only if provided
+    if ($request->hasFile('product_images')) {
+        // Delete existing product images
+        DB::table('productimages')->where('product_id', $product->id)->delete();
 
-    DB::table('productimages')->where('product_id', $product->id)->delete();
-
-if ($request->hasFile('product_images')) {
-    foreach ($request->file('product_images') as $image) {
-        $imagePath = $image->store('product_images', 'public');
-        DB::table('productimages')->insert([
-            'product_id' => $product->id,
-            'product_image' => 'storage/' . $imagePath // Add 'storage/' before saving
-        ]);
+        foreach ($request->file('product_images') as $image) {
+            $imagePath = $image->store('product_images', 'public');
+            DB::table('productimages')->insert([
+                'product_id' => $product->id,
+                'product_image' => 'storage/' . $imagePath // Add 'storage/' before saving
+            ]);
+        }
     }
-}
 
-
+    // Update unit conversion details
     $unitconversion = $product->productUnitConversion;
-    $unitconversion->update([
-        'product_base_unit_id' => $request->base_unit_id,
-        'product_secondary_unit_id' => $request->secondary_unit_id,
-        'conversion_rate' => $request->conversion_rate
-    ]);
+    if ($unitconversion) {
+        $unitconversion->update(array_filter([
+            'product_base_unit_id' => $request->base_unit_id,
+            'product_secondary_unit_id' => $request->secondary_unit_id,
+            'conversion_rate' => $request->conversion_rate
+        ]));
+    }
 
+    // Update sale price details
     $saleprice = Productpricing::where('product_id', $product->id)->first();
-    $saleprice->update([
-        'sale_price' => $request->sale_price,
-        'withorwithouttax' => $request->sale_withorwithouttax,
-        'discount' => $request->discount_amount,
-        'percentageoramount' => $request->discount_percentageoramount
-    ]);
+    if ($saleprice) {
+        $saleprice->update(array_filter([
+            'sale_price' => $request->sale_price,
+            'withorwithouttax' => $request->sale_withorwithouttax,
+            'discount' => $request->discount_amount,
+            'percentageoramount' => $request->discount_percentageoramount
+        ]));
+    }
 
+    // Update wholesale price details
     $wholesaleprice = Productwholesaleprice::where('product_id', $product->id)->first();
-    $wholesaleprice->update([
-        'whole_sale_price' => $request->wholesale_price,
-        'withorwithouttax' => $request->wholesale_withorwithouttax,
-        'wholesale_min_quantity' => $request->wholesale_min_quantity
-    ]);
+    if ($wholesaleprice) {
+        $wholesaleprice->update(array_filter([
+            'whole_sale_price' => $request->wholesale_price,
+            'withorwithouttax' => $request->wholesale_withorwithouttax,
+            'wholesale_min_quantity' => $request->wholesale_min_quantity
+        ]));
+    }
 
+    // Update stock details
     $stock = Productstock::where('product_id', $product->id)->first();
-    $stock->update([
-        'product_stock' => $request->opening_stock,
-        'at_price' => $request->at_price,
-        'min_stock' => $request->min_stock,
-        'location' => $request->location
-    ]);
+    if ($stock) {
+        $stock->update(array_filter([
+            'product_stock' => $request->opening_stock,
+            'at_price' => $request->at_price,
+            'min_stock' => $request->min_stock,
+            'location' => $request->location
+        ]));
+    }
 
+    // Update online store details
     $onlinestore = Productonlinestore::where('product_id', $product->id)->first();
-    $onlinestore->update([
-        'online_store_price' => $request->online_store_price,
-        'online_product_description' => $request->online_store_product_description
-    ]);
+    if ($onlinestore) {
+        $onlinestore->update(array_filter([
+            'online_store_price' => $request->online_store_price,
+            'online_product_description' => $request->online_store_product_description
+        ]));
+    }
 
+    // Return success response
     return response()->json([
         'message' => 'Product updated successfully',
         'product' => $product
     ], 200);
 }
-
 
 
 
@@ -856,6 +870,8 @@ public function bulkDeleteCategories(Request $request)
     // }
 
 
+ 
+ 
     public function getUnitConversion(Request $request)
 {
     $user = Auth::user();
