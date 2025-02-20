@@ -135,6 +135,7 @@ class ProductController extends Controller
         $stock->location = $request->location;
         $stock->date = $request->date;
         $stock->product_id = $product->id;
+        $stock->previous_stock = $request->opening_stock;
         $stock->save();
         }
 
@@ -584,15 +585,17 @@ public function deleteProduct($product_id){
     // Caterories section
     public function addProductCategory(Request $request){
         $user = Auth::user();
+        
         $validator = Validator::make($request->all(), [
             'product_category' => 'required'
         ]);
+        $searchForMaintanant = Tenant::where('user_id', $user->id)->first();
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
         $productcategory = new Productcategory();
         $productcategory->product_category = $request->product_category;
-        $productcategory->user_id = $user->id;
+        $productcategory->tenant_id = $searchForMaintanant->id;
         $productcategory->save();
         return response()->json(['message' => 'Product category created successfully'], 200);
     }
@@ -604,20 +607,56 @@ public function deleteProduct($product_id){
  
 
     public function getProductCategory()
-{
-    $user = Auth::user();
-
-    $productcategories = Productcategory::where('is_delete', false)
-        ->where(function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
-        ->withCount('products') // Count products for each category
-        ->get();
-
-    return response()->json($productcategories, 200);
-}
-
+    {
+        $user = Auth::user();
+        $searchForMaintanant = Tenant::where('user_id', $user->id)->first();
     
+        $productcategories = Productcategory::where('is_delete', false)
+            ->where(function ($query) use ($searchForMaintanant) {
+                $query->where('tenant_id', $searchForMaintanant->id);
+            })
+            ->withCount('products') // Count products for each category
+            ->get();
+    
+        return response()->json($productcategories, 200);
+    }
+    
+
+
+// public function getPerticularProductCategory(Request $request)
+// {
+//     $validator = Validator::make($request->all(), [
+//         'product_category_id' => 'required|numeric'
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json(['error' => $validator->errors()], 400);
+//     }
+//     $searchForMaintanant = Tenant::where('user_id', $user->id)->first();
+//     $productcategories = Productcategory::where('is_delete', false)
+//         ->where('id', $request->product_category_id)
+//         ->where('tenant_id', $searchForMaintanant->id)
+//         ->with(['products.stock', 'products.pricing' , 'products.images'])
+//         ->first();
+
+//     $user = Auth::user();
+
+
+//     if (!$productcategories) {
+//         return response()->json(['message' => 'No product category found'], 404);
+//     }
+
+//     $productcategories->product_count = $productcategories->products->count();
+//     foreach ($productcategories->products as $product) {
+//         $salePrice = optional($product->pricing)->sale_price ?? 0;
+//         $productStock = optional($product->stock)->product_stock ?? 0;
+//         $product->stock_value = $salePrice * $productStock;
+//     }
+
+//     return response()->json($productcategories, 200);
+// }
+
+
 
 
 public function getPerticularProductCategory(Request $request)
@@ -631,10 +670,11 @@ public function getPerticularProductCategory(Request $request)
     }
 
     $user = Auth::user();
+    $searchForMaintanant = Tenant::where('user_id', $user->id)->first();
     $productcategories = Productcategory::where('is_delete', false)
         ->where('id', $request->product_category_id)
-        ->where('user_id', $user->id)
-        ->with(['products.stock', 'products.pricing' , 'products.images'])
+        ->where('tenant_id', $searchForMaintanant->id)
+        ->with(['products.stock', 'products.pricing', 'products.images'])
         ->first();
 
     if (!$productcategories) {
@@ -650,10 +690,6 @@ public function getPerticularProductCategory(Request $request)
 
     return response()->json($productcategories, 200);
 }
-
-
-
-
 
 
     

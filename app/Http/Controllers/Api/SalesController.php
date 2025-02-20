@@ -164,17 +164,18 @@ class SalesController extends Controller
                     }
             
                     $productStock->save();
-                    $productstock = $product->stock->product_stock;
-                    $productconversionrate = $product->productUnitConversion->conversion_rate;
-                    $stockvalue = $productstock * $productconversionrate;
-                    $buyingstock = $item['quantity'] / $productconversionrate;
+                    // $productstock = $product->stock->product_stock;
+                    // $productconversionrate = $product->productUnitConversion->conversion_rate;
+                    // $stockvalue = $productstock * $productconversionrate;
+                    // $buyingstock = $item['quantity'] / $productconversionrate;
+
+                    $totalsales = Productsale::where('product_id', $item['product_id'])->sum('quantity');
+                    $buyingstock = $totalsales/$productconversionrate;
+
                     if($item['quantity'] < $productconversionrate){
                         return response()->json([
                             'message' => 'Sale invoice created successfully'
                         ], 200);
-                        // elseif($item['quantity'] == $){
-                            // $productStock->product_stock -= 1;
-                            // $productStock->save();
                     }
                     else{
                         $productStock->product_stock -= $buyingstock;
