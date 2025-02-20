@@ -155,6 +155,7 @@ class AuthController extends Controller
     $tenantUnit = new TenantUnit();
     $tenantUnit->business_name = 'Business Name';
     $tenantUnit->tenant_id = $tenant->id;
+    $tenantUnit->phone_number = $request->mobile_number;
     $tenantUnit->save();
 
     $user->user_tenant_unit_id = $tenantUnit->id;
