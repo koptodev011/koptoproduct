@@ -212,6 +212,7 @@ public function getProducts(Request $request)
 
 
 public function editProdutDetails(Request $request) {
+    // dd($request->sale_withorwithouttax);
     
     // Validate incoming request data
     $validator = Validator::make($request->all(), [
@@ -259,23 +260,17 @@ public function editProdutDetails(Request $request) {
     if ($validator->fails()) {
         return response()->json($validator->errors(), 400);
     }
-
-    // Find the product by ID
     $product = Product::find($request->product_id);
-
-    // Return error if product not found
     if (!$product) {
         return response()->json(['error' => 'Product not found'], 404);
     }
-
-    // Update product attributes only if they are present in the request
     $product->update(array_filter([
         'product_name' => $request->product_name,
         'product_hsn' => $request->product_hsn,
         'product_base_unit' => $request->base_unit_id,
         'description' => $request->description,
         'mrp' => $request->mrp,
-        'category_id' => $request->product_category,
+        'product_category_id' => $request->product_category,
         'item_code' => $request->assign_code,
         'tax_id' => $request->tax_id
     ]));
@@ -306,13 +301,19 @@ public function editProdutDetails(Request $request) {
 
     // Update sale price details
     $saleprice = Productpricing::where('product_id', $product->id)->first();
+    
     if ($saleprice) {
+       
         $saleprice->update(array_filter([
             'sale_price' => $request->sale_price,
             'withorwithouttax' => $request->sale_withorwithouttax,
             'discount' => $request->discount_amount,
             'percentageoramount' => $request->discount_percentageoramount
         ]));
+        $saleprice->withorwithouttax = $request->sale_withorwithouttax;
+        $saleprice->percentageoramount = $request->discount_percentageoramount;
+        $saleprice->save();
+     
     }
 
     // Update wholesale price details
@@ -323,9 +324,22 @@ public function editProdutDetails(Request $request) {
             'withorwithouttax' => $request->wholesale_withorwithouttax,
             'wholesale_min_quantity' => $request->wholesale_min_quantity
         ]));
+        $wholesaleprice->withorwithouttax = $request->wholesale_withorwithouttax;
+        $wholesaleprice->save();
     }
 
-    // Update stock details
+    $purchasePrice = Productpurchesprice::where('product_id', $product->id)->first();
+    if ($purchasePrice) {
+        $purchasePrice->update(array_filter([
+            'product_purches_price' => $request->purchese_price,
+            'withorwithouttax' => $request->purchese_withorwithouttax
+        ]));
+    }
+
+    $purchasePrice->withorwithouttax = $request->purchese_withorwithouttax;
+    $purchasePrice->save();
+
+    
     $stock = Productstock::where('product_id', $product->id)->first();
     if ($stock) {
         $stock->update(array_filter([
