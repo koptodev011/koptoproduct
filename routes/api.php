@@ -57,14 +57,20 @@ Route::get('/getpartiesbygroup', [PartyController::class, 'getPartiesByGroup']);
 Route::get('/getpartiesexceptselectedcategory',[PartyController::class,'getPartiesExceptSelectedCategory']);
 });
 
+
+
 // Get business type
 Route::get('/getbusinesstype', [TenantController::class, 'getBusinessType']);
 Route::get('/getbusinesscategory', [TenantController::class, 'getBusinessCategory']);
 Route::get('/getallstates', [TenantController::class, 'getAllStates']);
 Route::get('/getpartyreminder', [PartyController::class, 'getPartyReminder']);
 
+Route::middleware('auth:sanctum')->group(function () {
+Route::post('/movetothisgroup', [PartyController::class,'moveToThisGroup']);
 
+});
 
+Route::post('/changepartystatus',[PartyController::class,'changePartyStatus']);
 
 
 

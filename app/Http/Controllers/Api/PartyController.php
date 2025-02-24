@@ -623,16 +623,82 @@ public function getPartiesByGroup(Request $request)
 }
 
 
-public function movetothisgroup(Request $request){
+public function moveToThisGroup(Request $request){
     $validator = Validator::make($request->all(), [
         'group_id' => 'required|numeric',
         'party_ids' => 'required|array',
         'party_ids.*' => 'required|numeric',
     ]);
+
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+
+
+    if (!$searchForMainTenant) {
+        return response()->json(['message' => 'Tenant not found or inactive'], 404);
+    }
+
+    $parties = Party::whereIn('id', $request->party_ids)
+        ->where('tenant_id', $searchForMainTenant->id)
+        ->where('is_delete', 0)
+        ->get();
+    if ($parties->isEmpty()) {
+        return response()->json(['message' => 'Parties not found'], 404);
+    }
+
+    foreach ($parties as $party) {
+        $party->group_id = $request->group_id;
+        $party->save();
+    }
+
+    return response()->json(['message' => 'Parties moved to the new group successfully'], 200);
 }
 
 
 public function getPartiesExceptSelectedCategory(Request $request){
-dd("ok");
+    $validator = Validator::make($request->all(), [
+        'group_id' => 'required|numeric',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+
+    if (!$searchForMainTenant) {
+        return response()->json(['message' => 'Tenant not found or inactive'], 404);
+    }
+
+    $parties = Party::where('tenant_id', $searchForMainTenant->id)
+        ->where('is_delete', 0)
+        ->where('group_id', '!=', $request->group_id)
+        ->get();
+
+    if ($parties->isEmpty()) {
+        return response()->json(['message' => 'Parties not found'], 404);
+    }
+
+    return response()->json(['parties' => $parties], 200);
 }
+
+
+public function changePartyStatus(Request $request){
+    $validator = Validator::make($request->all(), [
+        'party_id' => 'required|numeric',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+    $searchForParty = Party::where('id',$request->party_id)->first();
+    $searchForParty->party_status = 0;
+    $searchForParty->save();
+
+    return response()->json(['message' => 'Party status changed successfully'], 200);
+}
+
+
 }
