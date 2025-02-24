@@ -387,10 +387,13 @@ public function getPartyReminder(Request $request) {
         'data' => $setreminder
     ]);
 }
+
+
 public function deleteParty(Request $request)
 {
     $validator = Validator::make($request->all(), [
-        'party_id' => 'required|numeric'
+        'party_ids' => 'required|array',
+        'party_ids.*' => 'required|numeric'
     ]);
     if ($validator->fails()) {
         return response()->json(['error' => $validator->errors()], 400);
@@ -401,24 +404,22 @@ public function deleteParty(Request $request)
     if (!$searchForMainTenant) {
         return response()->json(['message' => 'Tenant not found or inactive'], 404);
     }
-    $party = Party::where('id', $request->party_id)
-        ->where('tenant_id', $searchForMainTenant->id)
-        ->first();
 
-    $party->is_delete = 1;
-    $party->save();
-    if (!$party) {
-        return response()->json(['message' => 'Party not found'], 404);
+    $parties = Party::whereIn('id', $request->party_ids)
+        ->where('tenant_id', $searchForMainTenant->id)
+        ->get();
+
+    if ($parties->isEmpty()) {
+        return response()->json(['message' => 'Parties not found'], 404);
     }
 
+    foreach ($parties as $party) {
+        $party->is_delete = 1;
+        $party->save();
+    }
 
-    // Delete the party
-
-    return response()->json(['message' => 'Party deleted successfully'], 200);
-}
-
-
+    return response()->json(['message' => 'Parties deleted successfully'], 200);
     
-
+}
 }
 
