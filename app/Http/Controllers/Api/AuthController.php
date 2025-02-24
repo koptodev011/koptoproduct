@@ -177,7 +177,7 @@ class AuthController extends Controller
     // Create Party Group
     $partygroup = new Partygroup();
     $partygroup->group_name = 'General';
-    $partygroup->user_id = $user->id;
+    $partygroup->tenant_id = $tenant->id;
     $partygroup->save();
 
     // Generate Token
