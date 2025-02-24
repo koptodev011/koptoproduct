@@ -18,27 +18,61 @@ class PartyController extends Controller
 
 
 
-    public function getParties() {
-        $user = auth()->user();
-        $parties = Party::where('user_id', $user->id)
-            ->with(['shippingAddresses', 'additionalFields'])
-            ->get();
+    // public function getParties() {
+    //     $user = auth()->user();
+    //     $parties = Party::where('user_id', $user->id)
+    //         ->with(['shippingAddresses', 'additionalFields'])
+    //         ->where('isactive', 1)
+    //         ->get();
     
-        if ($parties->isEmpty()) {
-            return response()->json([
-                'message' => 'Parties not found or inactive'
-            ], 404);
-        }
-        return response()->json($parties, 200);
+    //     if ($parties->isEmpty()) {
+    //         return response()->json([
+    //             'message' => 'Parties not found or inactive'
+    //         ], 404);
+    //     }
+    //     return response()->json($parties, 200);
+    // }
+
+
+
+public function getParties()
+{
+    $user = auth()->user();
+    $parties = Party::where('user_id', $user->id)
+        ->with(['shippingAddresses', 'additionalFields'])
+        ->where('isactive', 1)
+        ->where('is_delete', 0)
+        ->get();
+
+    if ($parties->isEmpty()) {
+        return response()->json([
+            'message' => 'Parties not found or inactive'
+        ], 404);
     }
 
+    // Get the count of parties grouped by category
+    $partyCountsByCategory = Party::where('user_id', $user->id)
+        ->where('isactive', 1)
+        ->select('group_id', \DB::raw('count(*) as count'))
+        ->groupBy('group_id')
+        ->get()
+        ->pluck('count', 'group_id');
+
+    return response()->json([
+        'parties' => $parties,
+        'party_counts_by_category' => $partyCountsByCategory
+    ], 200);
+}
 
     public function getParty(Request $request) {
         $validator = Validator::make($request->all(), [
             'party_id' => 'required|numeric'
         ]);
         $user = auth()->user();
-        $parties = Party::where('user_id', $user->id)
+        $searchForMainTenant = Tenant::where('user_id', $user->id)
+            ->where('isactive', 1)
+            ->first();
+        $parties = Party::where('tenant_id', $searchForMainTenant->id)
         ->with(['shippingAddresses', 'additionalFields'])
         ->where('id', $request->party_id)->first();
 
@@ -50,9 +84,15 @@ class PartyController extends Controller
         return response()->json($parties, 200);
     }
 
+  
+  
+  
     public function getPartyGroup(){
         $user= auth()->user();
-        $partygroup = Partygroup::where('user_id', $user->id)->get();
+        $searchForMainTenant = Tenant::where('user_id', $user->id)
+            ->where('isactive', 1)
+            ->first();
+        $partygroup = Partygroup::where('tenant_id', $searchForMainTenant->id)->get();
         if ($partygroup->isEmpty()) {
             return response()->json([
                 'message' => 'Party group not found'
@@ -144,12 +184,18 @@ class PartyController extends Controller
 
 
     public function addPartyGroup(Request $request){
+        $user = auth()->user();
+        $searchForMainTenant = Tenant::where('user_id', $user->id)
+            ->where('isactive', 1)
+            ->first();
+
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string',
         ]);
 
         $partygroup = new Partygroup();
         $partygroup->group_name = $request->group_name;
+        $partygroup->tenant_id = $searchForMainTenant->id;
         $partygroup->save();
 
         if ($validator->fails()) {
@@ -158,7 +204,6 @@ class PartyController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-        $user = auth()->user();
         return response()->json(['message' => 'Party group created successfully'], 200);
     }
 
@@ -342,9 +387,35 @@ public function getPartyReminder(Request $request) {
         'data' => $setreminder
     ]);
 }
+public function deleteParty(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'party_id' => 'required|numeric'
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
 
-    
+    if (!$searchForMainTenant) {
+        return response()->json(['message' => 'Tenant not found or inactive'], 404);
+    }
+    $party = Party::where('id', $request->party_id)
+        ->where('tenant_id', $searchForMainTenant->id)
+        ->first();
 
+    $party->is_delete = 1;
+    $party->save();
+    if (!$party) {
+        return response()->json(['message' => 'Party not found'], 404);
+    }
+
+
+    // Delete the party
+
+    return response()->json(['message' => 'Party deleted successfully'], 200);
+}
 
 
     
