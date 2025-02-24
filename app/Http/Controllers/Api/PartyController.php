@@ -114,7 +114,7 @@ public function getParties()
             'party_name' => 'required|string',
             'tin_number' => 'nullable|string',
             'phone_number' => 'nullable|numeric|digits:10',
-            'email' => 'nullable|email|unique:users,email',
+            'email' => 'nullable|email',
             'billing_address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
             'topayortorecive' => 'nullable|boolean',
@@ -591,7 +591,7 @@ public function getPartiesByGroup(Request $request)
         ->get();
     
     if ($parties->isEmpty()) {
-        return response()->json(['message' => 'Parties not found'], 404);
+        return response()->json([ 'category' => $searchCategory,'message' => 'Parties not found'], 404);
     }
 
     $receivedAmount = Party::where('tenant_id', $searchForMainTenant->id)
