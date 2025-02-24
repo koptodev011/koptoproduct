@@ -46,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getpartygroup', [PartyController::class, 'getPartyGroup']);
     // Add party group
 Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
-Route::delete('/deleteparty', [PartyController::class, 'deleteParty']);
+Route::post('/deleteparty', [PartyController::class, 'deleteParty']);
 
 });
 
