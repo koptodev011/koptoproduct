@@ -50,17 +50,9 @@ public function getParties()
         ], 404);
     }
 
-    // Get the count of parties grouped by category
-    $partyCountsByCategory = Party::where('user_id', $user->id)
-        ->where('isactive', 1)
-        ->select('group_id', \DB::raw('count(*) as count'))
-        ->groupBy('group_id')
-        ->get()
-        ->pluck('count', 'group_id');
 
     return response()->json([
-        'parties' => $parties,
-        'party_counts_by_category' => $partyCountsByCategory
+        'parties' => $parties
     ], 200);
 }
 
@@ -88,17 +80,26 @@ public function getParties()
   
   
     public function getPartyGroup(){
-        $user= auth()->user();
+        $user = auth()->user();
         $searchForMainTenant = Tenant::where('user_id', $user->id)
             ->where('isactive', 1)
             ->first();
-        $partygroup = Partygroup::where('tenant_id', $searchForMainTenant->id)->get();
-        if ($partygroup->isEmpty()) {
+        $partyGroups = Partygroup::where('tenant_id', $searchForMainTenant->id)
+            ->where('is_delete', 0)
+            ->get();
+    
+        if ($partyGroups->isEmpty()) {
             return response()->json([
                 'message' => 'Party group not found'
             ], 404);
         }
-        return response()->json($partygroup, 200);
+    
+        $partyGroupsWithCount = $partyGroups->map(function ($partyGroup) {
+            $partyGroup->party_count = Party::where('group_id', $partyGroup->id)->count();
+            return $partyGroup;
+        });
+    
+        return response()->json($partyGroupsWithCount, 200);
     }
 
  
@@ -421,5 +422,217 @@ public function deleteParty(Request $request)
     return response()->json(['message' => 'Parties deleted successfully'], 200);
     
 }
+
+
+
+
+public function updatePartyGroup(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'group_id' => 'required|numeric',
+        'group_name' => 'required|string',
+    ]);
+   
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+        ], 400);
+    }
+
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)
+        ->where('isactive', 1)
+        ->first();
+    $partyGroup = Partygroup::where('id', $request->group_id)
+        ->where('tenant_id', $searchForMainTenant->id)
+        ->first();
+    
+    if (!$partyGroup) {
+        return response()->json([
+            'message' => 'Party group not found or inactive',
+        ], 404);
+    }
+
+    $partyGroup->update([
+        'group_name' => $request->group_name,
+    ]);
+
+    return response()->json([
+        'message' => 'Party group updated successfully',
+    ]);
 }
 
+
+
+
+public function deletePartyGroup(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'group_ids' => 'required|array',
+        'group_ids.*' => 'required|numeric',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+
+    if (!$searchForMainTenant) {
+        return response()->json(['message' => 'Tenant not found or inactive'], 404);
+    }
+
+    $partyGroups = Partygroup::whereIn('id', $request->group_ids)
+        ->where('tenant_id', $searchForMainTenant->id)
+        ->get();
+
+    if ($partyGroups->isEmpty()) {
+        return response()->json(['message' => 'Party groups not found'], 404);
+    }
+    $searchForGeneralCategory = Partygroup::where('tenant_id', $searchForMainTenant->id)
+        ->where('group_name', 'General')
+        ->first();
+
+    foreach ($partyGroups as $partyGroup) {
+        $partyGroup->is_delete = 1;
+        $partyGroup->save();
+        Party::where('group_id', $partyGroup->id)
+            ->update(['group_id' => $searchForGeneralCategory->id]);
+    }
+
+
+    return response()->json(['message' => 'Party groups deleted successfully'], 200);
+}
+
+
+// public function getPartiesByGroup(Request $request)
+// {
+//     $validator = Validator::make($request->all(), [
+//         'group_id' => 'required|numeric',
+//     ]);
+//     if ($validator->fails()) {
+//         return response()->json(['error' => $validator->errors()], 400);
+//     }
+//     $user = auth()->user();
+//     $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+
+//     if (!$searchForMainTenant) {
+//         return response()->json(['message' => 'Tenant not found or inactive'], 404);
+//     }
+
+//     $parties = Party::where('tenant_id', $searchForMainTenant->id)
+//         ->where('group_id', $request->group_id)
+//         ->where('is_delete', 0)
+//         ->get();
+    
+//     $searchCategory = Partygroup::where('tenant_id', $searchForMainTenant->id)
+//         ->where('id', $request->group_id)
+//         ->first();
+//     $searchParties = Party::where('tenant_id', $searchForMainTenant->id)
+//         ->where('group_id', $request->group_id)
+//         ->where('is_delete', 0)
+//         ->get();
+
+//     if ($parties->isEmpty()) {
+//         return response()->json(['message' => 'Parties not found'], 404);
+//     }
+
+//     $receivedamount = Party::where('tenant_id', $searchForMainTenant->id)
+//         ->where('group_id', $request->group_id)
+//         ->where('is_delete', 0)
+//         ->where('topayortorecive', 1)
+//         ->sum('opening_balance');
+    
+//     $topayamount = Party::where('tenant_id', $searchForMainTenant->id)
+//         ->where('group_id', $request->group_id)
+//         ->where('is_delete', 0)
+//         ->where('topayortorecive', 0)
+//         ->sum('opening_balance');
+    
+//     if($receivedamount>$topayamount){
+//         $amount = $receivedamount - $topayamount;
+//         $amountstatus = "Receive";
+//     }else{
+//         $amount = $topayamount - $receivedamount;
+//         $amountstatus = "ToPay";
+//     }
+
+//     return response()->json(['parties' => $parties], 200);
+
+// }
+
+
+public function getPartiesByGroup(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'group_id' => 'required|numeric',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
+    }
+    $user = auth()->user();
+    $searchForMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+
+    if (!$searchForMainTenant) {
+        return response()->json(['message' => 'Tenant not found or inactive'], 404);
+    }
+
+    $searchCategory = Partygroup::where('tenant_id', $searchForMainTenant->id)
+        ->where('id', $request->group_id)
+        ->first();
+
+    if (!$searchCategory) {
+        return response()->json(['message' => 'Party group not found'], 404);
+    }
+
+    $parties = Party::where('tenant_id', $searchForMainTenant->id)
+        ->where('group_id', $request->group_id)
+        ->where('is_delete', 0)
+        ->get();
+    
+    if ($parties->isEmpty()) {
+        return response()->json(['message' => 'Parties not found'], 404);
+    }
+
+    $receivedAmount = Party::where('tenant_id', $searchForMainTenant->id)
+        ->where('group_id', $request->group_id)
+        ->where('is_delete', 0)
+        ->where('topayortorecive', 1)
+        ->sum('opening_balance');
+    
+    $toPayAmount = Party::where('tenant_id', $searchForMainTenant->id)
+        ->where('group_id', $request->group_id)
+        ->where('is_delete', 0)
+        ->where('topayortorecive', 0)
+        ->sum('opening_balance');
+    
+    if ($receivedAmount > $toPayAmount) {
+        $amount = $receivedAmount - $toPayAmount;
+        $amountStatus = "Receive";
+    } else {
+        $amount = $toPayAmount - $receivedAmount;
+        $amountStatus = "ToPay";
+    }
+
+    return response()->json([
+        'category' => $searchCategory,
+        'amount' => $amount,
+        'amount_status' => $amountStatus,
+        'parties' => $parties,
+    ], 200);
+}
+
+
+public function movetothisgroup(Request $request){
+    $validator = Validator::make($request->all(), [
+        'group_id' => 'required|numeric',
+        'party_ids' => 'required|array',
+        'party_ids.*' => 'required|numeric',
+    ]);
+}
+
+
+public function getPartiesExceptSelectedCategory(Request $request){
+dd("ok");
+}
+}

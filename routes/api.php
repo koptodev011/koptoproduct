@@ -48,16 +48,19 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/addpartygroup', [PartyController::class, 'addPartyGroup']);
 Route::post('/deleteparty', [PartyController::class, 'deleteParty']);
 
+Route::post('/updatepartygroup', [PartyController::class, 'updatePartyGroup']);
+
+Route::post('/deletepartygroup', [PartyController::class, 'deletePartyGroup']);
+
+Route::get('/getpartiesbygroup', [PartyController::class, 'getPartiesByGroup']);
+
+Route::get('/getpartiesexceptselectedcategory',[PartyController::class,'getPartiesExceptSelectedCategory']);
 });
 
 // Get business type
 Route::get('/getbusinesstype', [TenantController::class, 'getBusinessType']);
-// Get Business category
 Route::get('/getbusinesscategory', [TenantController::class, 'getBusinessCategory']);
-// get All states
 Route::get('/getallstates', [TenantController::class, 'getAllStates']);
-
-
 Route::get('/getpartyreminder', [PartyController::class, 'getPartyReminder']);
 
 
