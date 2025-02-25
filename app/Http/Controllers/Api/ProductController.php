@@ -183,17 +183,44 @@ class ProductController extends Controller
 
 
 
+// public function getProducts(Request $request)
+// {
+//     $user = Auth::user();
+//     $searchMainTanant = Tenant::where('user_id', $user->id)->first();
+//     $products = Product::where('tenant_id', $searchMainTanant->id)
+//         ->with([ 
+//             'pricing',       
+//             'wholesalePrice', 
+//             'stock',        
+//             'onlineStore',
+//             'productUnitConversion',
+//             'purchasePrice',
+//             'images'
+//         ])
+//         ->get();
+
+//     if ($products->isEmpty()) {
+//         return response()->json(['message' => 'No products found'], 404);
+//     }
+
+//     return response()->json(['products' => $products], 200);
+// }
+
+
+
 public function getProducts(Request $request)
 {
     $user = Auth::user();
-    $searchMainTanant = Tenant::where('user_id', $user->id)->first();
-    $products = Product::where('tenant_id', $searchMainTanant->id)
-        ->with([ 
-            'pricing',       
-            'wholesalePrice', 
-            'stock',        
+    $searchMainTenant = Tenant::where('user_id', $user->id)->first();
+    
+    $products = Product::where('tenant_id', $searchMainTenant->id)
+        ->with([
+            'pricing',
+            'wholesalePrice',
+            'stock',
             'onlineStore',
-            'productUnitConversion',
+            'productUnitConversion.baseUnit', // Eager load base unit
+            'productUnitConversion.secondaryUnit', // Eager load secondary unit
             'purchasePrice',
             'images'
         ])
@@ -205,7 +232,6 @@ public function getProducts(Request $request)
 
     return response()->json(['products' => $products], 200);
 }
-
 
 
 
