@@ -22,4 +22,15 @@ class Productunitconversion extends Model
     {
         return $this->belongsTo(Product::class, 'productconversion_id', 'id');
     }
+
+    public function baseUnit()
+    {
+        return $this->belongsTo(ProductBaseUnit::class, 'product_base_unit_id');
+    }
+
+    public function secondaryUnit()
+    {
+        return $this->belongsTo(ProductBaseUnit::class, 'product_secondary_unit_id');
+    }
+    
 }
