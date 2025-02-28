@@ -590,9 +590,7 @@ public function getPartiesByGroup(Request $request)
         ->where('is_delete', 0)
         ->get();
     
-    if ($parties->isEmpty()) {
-        return response()->json([ 'category' => $searchCategory,'message' => 'Parties not found'], 404);
-    }
+ 
 
     $receivedAmount = Party::where('tenant_id', $searchForMainTenant->id)
         ->where('group_id', $request->group_id)

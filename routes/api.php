@@ -131,6 +131,9 @@ Route::get('/assigncode', [ProductController::class, 'assignCode']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsaleinvoice', [SalesController::class, 'addSaleInvoice']);
     Route::get('/getsalesdata',[SalesController::class,'getSalesData']);
+    Route::post('/updatesaleinvoice', [SalesController::class, 'updateSaleInvoice']);
+    Route::delete('/deletesaleinvoice/{sale_id}', [SalesController::class, 'deleteSaleInvoice']);
+
 });
 Route::post('/addsalespaymenttype', [SalesController::class, 'addSalesPaymentType']);
 
@@ -140,8 +143,10 @@ Route::get('/getallsalesearchfilters',[SalesController::class,'getAllSaleSearchF
 // Sales Estimate/Quotation
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsalequotation', [SalesController::class, 'addSalesQuotation']);
+    Route::get('/getsalequotationdata', [SalesController::class, 'getSaleQuotationData']);
 });
 Route::post('/convertquotationtosale', [SalesController::class, 'convertQuotationToSale']);
+Route::post('/updatesalequotation', [SalesController::class, 'updateSaleQuotation']);
 
 // Payment In
 Route::post('/addpaymentin',[SalesController::class,'addPaymentIn']);
@@ -159,11 +164,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/createpurchaseinvoice', [PurchaseController::class, 'createPurchaseInvoice']);
     Route::get('/getpurchasedata', [PurchaseController::class, 'getPurchaseData']);
     Route::post('/createpurchaseorderinvoice', [PurchaseController::class, 'createPurchaseOrderInvoice']);
+  
 });
 Route::post('/paymentout', [PurchaseController::class, 'paymentOut']);
 Route::post('/purchaseorder', [PurchaseController::class, 'purchaseOrder']);
 Route::post('/convertpurchaseordertopurchase', [PurchaseController::class, 'convertPurchaseOrderToPurchase']);
 Route::post('/purchasereturn', [PurchaseController::class, 'purchaseReturn']);
+
 
 
 
