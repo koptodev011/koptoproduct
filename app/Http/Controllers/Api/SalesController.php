@@ -816,9 +816,35 @@ public function addSalesQuotation(Request $request){
     }
 
     return response()->json([
-        'message' => 'Quotation converted to sale successfully',
-        'data' => $request->all(),
+        "invoice_number" => $sale->invoice_no,
+        "date" => $sale->invoice_date,
+        "due_date" => $sale->due_date,
+        "reference_no" => $sale->reference_no,
+        "billing_name" => $sale->billing_name,
+        "phone_number" => $sale->phone_number,
+        "address" => $sale->billing_address ?? "N/A",
+        "items" => collect($request->items)->map(function ($item, $index) {
+            $product = Product::find($item['product_id']);
+            $taxes = $product ? ProductTaxRate::where('id', $product->tax_id)->get() : collect([]);
+            
+            return [
+                "no" => $index + 1,
+                "product_name" => $product ? $product->product_name : "N/A",
+                "description" => $product ? $product->description : "N/A",
+                "quantity" => $item['quantity'],
+                "unit_price" => $item['price_per_unit'],
+                "total" => $item['product_amount'],
+                "tax" => $taxes->map(function ($tax) {
+                    return [
+                        "tax_name" => $tax->product_tax_name,
+                        "tax_percentage" => $tax->product_tax_rate
+                    ];
+                })
+            ];
+        }),
+        "total_amount" => $sale->total_amount
     ], 200);
+     
 }
 
 
@@ -1043,6 +1069,9 @@ public function convertQuotationToSale(Request $request){
 
 
 
+
+
+
 public function updateSaleQuotation(Request $request){
     $validator = Validator::make($request->all(), [
         "sale_id" => "required|exists:sales,id",
@@ -1080,7 +1109,7 @@ public function updateSaleQuotation(Request $request){
     if ($validator->fails()) {
         return response()->json(["errors" => $validator->errors()], 422);
     }
-
+    dd("ok");
     $sale = Sale::with('productSales')->find($request->sale_id);
     if (!$sale) {
         return response()->json(["message" => "Sale record not found."], 404);
@@ -1140,6 +1169,8 @@ public function updateSaleQuotation(Request $request){
         "message" => "Sale quotation updated successfully."
     ]);
 }
+
+
 
 
 
@@ -1264,6 +1295,9 @@ public function addSaleOrder(Request $request){
         'data' => $request->all(),
     ], 200);
 }
+
+
+
 
 public function deliveryChallan(Request $request){
     $validator = Validator::make($request->all(), [

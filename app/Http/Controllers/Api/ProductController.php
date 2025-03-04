@@ -36,35 +36,35 @@ class ProductController extends Controller
             'secondary_unit_id' => 'nullable|exists:productbaseunits,id',
             'conversion_rate' => 'nullable',
             'description' => 'nullable|string',    
-            'mrp' => 'nullable|numeric',
+            'mrp' => 'nullable',
             'product_category_id'=> 'nullable|exists:productcategories,id',
-            'assign_code'=> 'nullable|numeric|unique:products,item_code',
+            'assign_code'=> 'nullable|unique:products,item_code',
             
             // sale price
             'sale_price'=> 'required',
             'sale_withorwithouttax'=> 'nullable',
-            'discount_amount'=> 'nullable|numeric',
-            'discount_percentageoramount'=> 'nullable|numeric',
+            'discount_amount'=> 'nullable',
+            'discount_percentageoramount'=> 'nullable',
         
             // wholesale price
-            'wholesale_price'=> 'nullable|numeric',
+            'wholesale_price'=> 'nullable',
             'wholesale_withorwithouttax'=> 'nullable',
-            'wholesale_min_quantity'=> 'nullable|numeric',
+            'wholesale_min_quantity'=> 'nullable',
 
             //Product Purchase price
             'purchese_price'=> 'required|numeric',
-            'purchese_withorwithouttax'=> 'required|numeric',
-            'tax_id'=> 'required|numeric',
+            'purchese_withorwithouttax'=> 'required',
+            'tax_id'=> 'required',
             
             // stock
-            'opening_stock'=> 'nullable|numeric',
-            'at_price'=> 'nullable|numeric',
-            'min_stock'=> 'nullable|numeric',
+            'opening_stock'=> 'nullable',
+            'at_price'=> 'nullable',
+            'min_stock'=> 'nullable',
             'location'=> 'nullable|string',
             'date' => 'nullable|date',
         
             // online store
-            'online_store_price'=> 'nullable|numeric',
+            'online_store_price'=> 'nullable',
             'online_store_product_description'=> 'nullable|string',
 
             //product images
@@ -242,15 +242,15 @@ public function editProdutDetails(Request $request) {
     
     // Validate incoming request data
     $validator = Validator::make($request->all(), [
-        'product_id' => 'required|numeric',
+        'product_id' => 'required',
         'product_name' => 'nullable|string',
         'product_hsn' => 'nullable|string',
-        'base_unit_id' => 'nullable|numeric',
-        'secondary_unit_id' => 'nullable|numeric',
-        'conversion_rate' => 'nullable|numeric',
-        'description' => 'nullable|string',    
-        'mrp' => 'nullable|numeric',
-        'product_category'=> 'nullable|numeric',
+        'base_unit_id' => 'nullable',
+        'secondary_unit_id' => 'nullable',
+        'conversion_rate' => 'nullable',
+        'description' => 'nullable',    
+        'mrp' => 'nullable',
+        'product_category'=> 'nullable',
         'assign_code'=> 'nullable|string',
 
         // Sale price
