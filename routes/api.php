@@ -144,12 +144,16 @@ Route::get('/getallsalesearchfilters',[SalesController::class,'getAllSaleSearchF
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/addsalequotation', [SalesController::class, 'addSalesQuotation']);
     Route::get('/getsalequotationdata', [SalesController::class, 'getSaleQuotationData']);
+    Route::delete('/deletesalequotation/{sale_id}', [SalesController::class, 'deleteSaleQuotation']);
+    // Payment In
+Route::post('/addpaymentin',[SalesController::class,'addPaymentIn']);
+Route::get('/getpaymentindata',[SalesController::class,'getPaymentInData']);
+
 });
 Route::post('/convertquotationtosale', [SalesController::class, 'convertQuotationToSale']);
 Route::post('/updatesalequotation', [SalesController::class, 'updateSaleQuotation']);
 
-// Payment In
-Route::post('/addpaymentin',[SalesController::class,'addPaymentIn']);
+
 
 // Sale Order
 Route::middleware('auth:sanctum')->group(function () {

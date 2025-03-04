@@ -30,4 +30,9 @@ class Party extends Model
     {
         return $this->hasMany(Partyaddationalfields::class);
     }
+
+    public function paymentins()
+    {
+        return $this->hasMany(Paymentin::class);
+    }
 }
