@@ -224,6 +224,11 @@ class SalesController extends Controller
 
 
 
+
+
+
+
+
 public function getSalesData(Request $request)
 {
     $user = auth()->user();
