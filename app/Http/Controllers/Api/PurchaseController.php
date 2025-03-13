@@ -8,6 +8,9 @@ use App\Models\Paymentin;
 use App\Models\Purchase;
 use App\Models\Paymentout;
 use App\Models\Party;
+use App\Models\Tenant;
+use App\Models\TenantUnit;
+use App\Models\Product;
 use App\Models\Purchaseproduct;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -21,10 +24,12 @@ class PurchaseController extends Controller
         "po_number" => "required|numeric",
         "po_date" => "required|string",
         "purchase_description" => "nullable|string",
-        "purchase_image" => "nullable",
+        "purchase_image" => "nullable|image|mimes:jpeg,png,jpg,gif,svg",
         "total_amount" => "required|integer",
         "paid_amount" => "required|integer",
         "payment_type_id" => "required|integer",
+
+        
         "items" => "required|array",
         "items.*.product_id" => "required|integer",
         "items.*.quantity" => "required|integer",
@@ -34,7 +39,7 @@ class PurchaseController extends Controller
         "items.*.discount_amount" => "nullable|integer",
         "items.*.tax_amount" => "nullable|integer",
         "items.*.tax_percentage" => "nullable|integer",
-        "items.*.total_amount" => "required|integer", 
+        "items.*.product_amount" => "required|integer", 
         ]);
     
         if ($validator->fails()) {
@@ -43,7 +48,9 @@ class PurchaseController extends Controller
                 'errors' => $validator->errors()
             ], 400);
         }
-
+        $user = auth()->user(); 
+        $searchMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+        $searchTenantUnit = TenantUnit::where('tenant_id', $searchMainTenant->id)->where('isactive', 1)->first();
         $purchase = new Purchase();
         $purchase->party_id = $request->party_id;
         $purchase->phone_number = $request->phone_number;
@@ -54,7 +61,19 @@ class PurchaseController extends Controller
         $purchase->total_amount = $request->total_amount;
         $purchase->paid_amount = $request->paid_amount;
         $purchase->payment_type_id = $request->payment_type_id;
+        $purchase->tenant_unit_id = $searchTenantUnit->id;
+        $purchase->status = 'Purchase';
+        
+        if ($request->hasFile('purchase_image')) {
+            $image = $request->file('purchase_image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs('uploads/purchase_images', $imageName, 'public');
+        
+            $purchase->purchase_image = $imagePath; // Save path in the database
+        }
+        
         $purchase->save();
+
 
         foreach ($request->items as $item) {
             $purchaseproduct = new Purchaseproduct();
@@ -66,15 +85,41 @@ class PurchaseController extends Controller
             $purchaseproduct->discount_amount = $item['discount_amount'] ?? null;
             $purchaseproduct->tax_percentage = $item['tax_percentage']?? null;
             $purchaseproduct->tax_amount = $item['tax_amount'] ?? null;
-            $purchaseproduct->total_amount = $item['total_amount'];
+            $purchaseproduct->total_amount = $item['product_amount'];
             $purchaseproduct->purchase_id = $purchase->id;
+            $searchMainTenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
 
-            $purchaseproduct->save();
+            $product = Product::where('id', $item['product_id']) // Fixed reference
+                ->where('tenant_id', $searchMainTenant->id)
+                ->with([
+                    'productUnitConversion',
+                    'pricing',
+                    'wholesalePrice',
+                    'stock',
+                    'onlineStore',
+                    'images',
+                    'purchasePrice'
+                ])
+                ->first(); 
+
+        if($product->productUnitConversion->product_base_unit_id == $item['unit_id'] ){
+            $secondarystock = $product->productUnitConversion->conversion_rate * $item['quantity'];
+            $product->stock->secondaryunit_stock_value = $product->stock->secondaryunit_stock_value + $secondarystock;
+            $product->stock->product_stock = $product->stock->product_stock + $item['quantity'];
+            $product->stock->previous_stock = $product->stock->previous_stock + $item['quantity'];
+            $product->stock->save();
+
         }
-    
-    
+        if($product->productUnitConversion->product_secondary_unit_id  ==  $item['unit_id']){
+            $product->stock->secondaryunit_stock_value = $product->stock->secondaryunit_stock_value + $item['quantity'];
+            $product->stock->product_stock = $product->stock->secondaryunit_stock_value/$product->productUnitConversion->conversion_rate;
+            $increasedquantity = $item['quantity']/ $product->productUnitConversion->conversion_rate;
+            $product->stock->previous_stock = $product->stock->previous_stock + $increasedquantity;
+            $product->stock->save();
+        }
+    }
         return response()->json([
-            'message' => 'Purchase in added successfully'
+            'message' => 'product purchased successfully'
         ], 200);
     }
 
