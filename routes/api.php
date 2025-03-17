@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\SalesController;
 use App\Http\Controllers\Api\GrowYourBusiness;
+use App\Http\Controllers\Api\ReportsController;
 
 // Auth apis
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -187,3 +188,15 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/addtocart',[GrowYourBusiness::class,'addToCart']);
 Route::get('/getcartsummary',[GrowYourBusiness::class,'getCartSummary']);
 Route::post('/placeorder',[GrowYourBusiness::class,'placeOrder']);
+
+
+
+
+
+// Reports section
+
+Route::middleware('auth:sanctum')->group(function () {
+Route::get('getdaybookdata',[ReportsController::class,'dayBookReport']);
+Route::get('getalltransaction',[ReportsController::class,'allTransaction']);
+Route::get('profitlossreport',[ReportsController::class,'profitLossReport']);
+});
