@@ -131,7 +131,6 @@ class PurchaseController extends Controller
 
 
     public function getPurchaseData(Request $request){
-        // Validate the input
     $validator = Validator::make($request->all(), [
         'salefilter' => "nullable",
         "startdate" => "required_if:salefilter,Custom|date_format:d/m/Y",
@@ -197,12 +196,12 @@ class PurchaseController extends Controller
 
     // Fetch the sales data within the date range
     $purchaseQuery = Purchase::whereBetween('created_at', [$startdate, $enddate]);
-
+    
     if (!empty($request->party_id)) {
         $purchaseQuery->where('party_id', $request->party_id);
     }
     $purchase = $purchaseQuery->get();
-
+  
     if ($purchase->isEmpty()) {
         return response()->json([
             'message' => 'No data found for the given date range',
