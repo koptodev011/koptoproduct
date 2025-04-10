@@ -199,4 +199,5 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('getdaybookdata',[ReportsController::class,'dayBookReport']);
 Route::get('getalltransaction',[ReportsController::class,'allTransaction']);
 Route::get('profitlossreport',[ReportsController::class,'profitLossReport']);
+Route::get('billwiseprofit',[ReportsController::class,'billWiseProfit']);
 });
