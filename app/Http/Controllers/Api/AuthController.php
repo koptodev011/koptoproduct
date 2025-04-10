@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Tenant;
 use App\Models\UserTenantUnit;
 use App\Models\TenantUnit;
+use App\Models\Otp;
 class AuthController extends Controller
 {
 
@@ -21,8 +22,8 @@ class AuthController extends Controller
     public function login(Request $request)
 {
     $validator = Validator::make($request->all(), [
-        'email' => 'nullable|email|exists:users,email',
-        'phone_number' => 'nullable|numeric|exists:users,mobile_number',
+        // 'email' => 'nullable|email|exists:users,email',
+        'phone_number' => 'nullable|numeric|unique:users,mobile_number',
         // 'password' => 'required|min:4',
     ]);
 
@@ -33,89 +34,93 @@ class AuthController extends Controller
             'errors' => $validator->errors(),
         ], 400);
     }
-    $user = null;
-    if ($request->has('email')) {
-        $user = User::where('email', $request->email)->first();
-    } elseif ($request->has('phone_number')) {
-        $user = User::where('mobile_number', $request->phone_number)->first();
-    }
+    // $user = null;
+    // if ($request->has('email')) {
+    //     $user = User::where('email', $request->email)->first();
+    // } elseif ($request->has('phone_number')) {
+    //     $user = User::where('mobile_number', $request->phone_number)->first();
+    // }
 
-      if (!$user) {
-        return response()->json([
-            'message' => 'Invalid credentials',
-        ], 400);
-    }
+    //   if (!$user) {
+    //     return response()->json([
+    //         'message' => 'Invalid credentials',
+    //     ], 400);
+    // }
     // if (!$user || !Hash::check($request->password, $user->password)) {
     //     return response()->json([
     //         'message' => 'Invalid credentials',
     //     ], 400);
     // }
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+
+    $user = new User();
+    $user->name = $request->has('name') ? $request->name : 'Admin';
+    $user->email = $request->email;
+    $user->mobile_number = $request->mobile_number;
+    $user->password = Hash::make($request->password);
+    $user->role_id = 2;
+    $user->save();
+
+    // Create Tenant
+    $tenant = new Tenant();
+    $tenant->user_id = $user->id;
+    $tenant->phone_number = $request->mobile_number;
+    $tenant->save();
+
+    // Update User with Tenant ID
+
+
+    $tenantUnit = new TenantUnit();
+    $tenantUnit->business_name = 'Business Name';
+    $tenantUnit->tenant_id = $tenant->id;
+    $tenantUnit->phone_number = $request->mobile_number;
+    $tenantUnit->save();
+
+    $user->user_tenant_unit_id = $tenantUnit->id;
+    $user->save();
+
+    // Insert into UserTenantUnit table
+    UserTenantUnit::create([
+        'user_id' => $user->id,
+        'tenant_id' => $tenant->id,
+        'tenant_type' => Tenant::class, // Storing the model class
+    ]);
+
+    // Create Product Category
+    $productcategory = new Productcategory();
+    $productcategory->product_category = 'General';
+    $productcategory->tenant_id = $tenant->id;
+    $productcategory->save();
+
+    // Create Party Group
+    $partygroup = new Partygroup();
+    $partygroup->group_name = 'General';
+    $partygroup->tenant_id = $tenant->id;
+    $partygroup->save();
+
+    // $token = $user->createToken('auth_token')->plainTextToken;
+
+    $otp = rand(100000, 999999);
+    
+    $searchotptable = Otp::where('user_id', $user->id)->first();
+    
+    if ($searchotptable) {
+        $searchotptable->otp = $otp;
+        $searchotptable->save();
+    } else {
+        $otp = new Otp();
+        $otp->user_id = $user->id;
+        $otp->otp = $otp;
+        $otp->save();
+    }
 
     return response()->json([
         'message' => 'User logged in successfully',
-        'token' => $token,
+        'otp' => $user->otp
     ], 200);
 }
 
 
-
-
-
-    
-
-
-    // public function signup(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'name' => 'required|string',
-    //         'email' => 'required|email|unique:users,email',
-    //         'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number',
-    //         'password' => 'required|min:6',
-    //     ]);
-    
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'message' => 'Validation failed',
-    //             'errors' => $validator->errors(),
-    //         ], 400);
-    //     }
-      
-    //     $user = new User();
-    //     $user->name = $request->name;
-    //     $user->email = $request->email;
-    //     $user->mobile_number = $request->mobile_number;
-    //     $user->password = Hash::make($request->password);
-    //     $user->role_id = 2;
-    //     $user->save();
-
-    //     $tenant = new Tenant();
-    //     $tenant->user_id = $user->id;
-    //     $tenant->save();
-
-    //     $user->tenant_id = $tenant->id;
-    //     $user->save();
-
-    //     $productcategory = new Productcategory();
-    //     $productcategory->product_category = 'General';
-    //     $productcategory->user_id = $user->id;
-    //     $productcategory->save();
-
-    //     $partygroup = new Partygroup();
-    //     $partygroup->group_name = 'General';
-    //     $partygroup->user_id = $user->id;
-    //     $partygroup->save();
-
-    //     $token = $user->createToken('auth_token')->plainTextToken;
-
-    //     return response()->json([
-    //         'message' => 'User created successfully',
-    //         'user' => $user,
-    //         'token' => $token,
-    //     ], 200);
-    // }
-    
 
 
     public function signup(Request $request)
@@ -222,13 +227,9 @@ public function staffRoles()
 public function addStaff(Request $request)
 {
     $user = auth()->user();
-
     $validator = Validator::make($request->all(), [
-        'name' => 'required|string',
         'email' => 'required|email|unique:users,email',
-        'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number',
-        'role_id' => 'required|numeric|exists:roles,id',
-        'profile_photo' => 'nullable|image|',
+        'mobile_number' => 'required|numeric|digits:10|unique:users,mobile_number'
     ]);
 
     if ($validator->fails()) {
@@ -242,19 +243,18 @@ public function addStaff(Request $request)
 
 
     $newUser = new User();
-    $newUser->name = $request->name;
     $newUser->email = $request->email;
     $newUser->mobile_number = $request->mobile_number;
-    $newUser->role_id = $request->role_id;
     $newUser->user_tenant_unit_id = $tenant->id;
 
-    if ($request->hasFile('profile_photo')) {
-        $file = $request->file('profile_photo');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $path = $file->storeAs('profile_photo', $filename, 'public'); 
-        $newUser->profile_photo = 'storage/' . $path; 
-    }
+    // if ($request->hasFile('profile_photo')) {
+    //     $file = $request->file('profile_photo');
+    //     $filename = time() . '_' . $file->getClientOriginalName();
+    //     $path = $file->storeAs('profile_photo', $filename, 'public'); 
+    //     $newUser->profile_photo = 'storage/' . $path; 
+    // }
     $newUser->save();
+
     return response()->json(['message' => 'Staff member created successfully'], 200);
 }
 

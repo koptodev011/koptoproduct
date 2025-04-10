@@ -8,6 +8,8 @@ use App\Models\Tenant;
 use App\Models\Sale;
 use App\Models\TenantUnit;
 use App\Models\Purchase;
+use App\Models\Product;
+use App\Models\Productsale;
 class ReportsController extends Controller
 {
 
@@ -85,4 +87,52 @@ public function allTransaction(Request $request){
         'total_purchases' => $totalPurchases,
         'profit' => $profit
     ]);}
+
+
+   
+    public function billWiseProfit(Request $request)
+    {
+        $user = auth()->user();
+        $maintenant = Tenant::where('user_id', $user->id)->where('isactive', 1)->first();
+    
+        $tenantunit = TenantUnit::with(['user', 'businesstype', 'businesscategory', 'state', 'city'])
+            ->where('tenant_id', $maintenant->id)
+            ->where('isactive', 1)
+            ->first();
+    
+        $sales = Sale::with('productSales')->where('tenant_unit_id', $tenantunit->id)->get();
+    
+        $formattedSales = [];
+    
+        // Loop through each sale
+        foreach ($sales as $sale) {
+            $saleData = [
+                'sale_id' => $sale->id,
+                'products' => []
+            ];
+            foreach ($sale->productSales as $productSale) {
+                $product = Product::where('id', $productSale->product_id)
+                    ->with([
+                        'productUnitConversion',
+                        'pricing',
+                        'wholesalePrice',
+                        'stock',
+                        'onlineStore',
+                        'images',
+                        'purchasePrice'
+                    ])
+                    ->where('id', $productSale->product_id)
+                    ->first();
+                $saleData['products'][] = $product;
+                return response()->json([
+                  'data' => $formattedSales
+              ]);
+            }
+            $formattedSales[] = $saleData;
+        }
+        return response()->json([
+            'data' => $formattedSales
+        ]);
+    }
+    
 }
